@@ -147,11 +147,19 @@
   function close(success, error) {
     exec(success, error, "OSInAppBrowser", "close", [{}]);
   }
+  function insertCSS(cssCode, success, error) {
+    exec(success, error, "OSInAppBrowser", "insertCSS", [cssCode]);
+  }
+  function executeScript(jsCode, success, error) {
+    exec(success, error, "OSInAppBrowser", "executeScript", [jsCode]);
+  }
   module.exports = {
     openInWebView,
     openInExternalBrowser,
     openInSystemBrowser,
-    close
+    close,
+    insertCSS,
+    executeScript
   };
   exports2.AndroidAnimation = AndroidAnimation;
   exports2.AndroidViewStyle = AndroidViewStyle;

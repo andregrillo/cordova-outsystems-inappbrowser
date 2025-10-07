@@ -101,7 +101,7 @@ class OSInAppBrowser: CDVPlugin {
     func close(command: CDVInvokedUrlCommand) {
         self.commandDelegate.run { [weak self] in
             guard let self else { return }
-            
+
             if let openedViewController {
                 DispatchQueue.main.async {
                     openedViewController.dismiss(animated: true) { [weak self] in
@@ -110,6 +110,54 @@ class OSInAppBrowser: CDVPlugin {
                 }
             } else {
                 self.send(error: .noBrowserToClose, for: command.callbackId)
+            }
+        }
+    }
+
+    @objc(insertCSS:)
+    func insertCSS(command: CDVInvokedUrlCommand) {
+        guard let cssCode = command.argument(at: 0) as? String else {
+            send(error: .customError(message: "Missing CSS code parameter"), for: command.callbackId)
+            return
+        }
+
+        guard let viewModel = OSIABWebViewModelManager.shared.get() else {
+            send(error: .customError(message: "No InAppBrowser instance is currently open"), for: command.callbackId)
+            return
+        }
+
+        DispatchQueue.main.async {
+            viewModel.insertCSS(code: cssCode) { [weak self] result in
+                switch result {
+                case .success:
+                    self?.sendSuccess(for: command.callbackId)
+                case .failure(let error):
+                    self?.send(error: .customError(message: "Failed to insert CSS: \(error.localizedDescription)"), for: command.callbackId)
+                }
+            }
+        }
+    }
+
+    @objc(executeScript:)
+    func executeScript(command: CDVInvokedUrlCommand) {
+        guard let jsCode = command.argument(at: 0) as? String else {
+            send(error: .customError(message: "Missing JavaScript code parameter"), for: command.callbackId)
+            return
+        }
+
+        guard let viewModel = OSIABWebViewModelManager.shared.get() else {
+            send(error: .customError(message: "No InAppBrowser instance is currently open"), for: command.callbackId)
+            return
+        }
+
+        DispatchQueue.main.async {
+            viewModel.executeScript(code: jsCode) { [weak self] result in
+                switch result {
+                case .success:
+                    self?.sendSuccess(for: command.callbackId)
+                case .failure(let error):
+                    self?.send(error: .customError(message: "Failed to execute script: \(error.localizedDescription)"), for: command.callbackId)
+                }
             }
         }
     }

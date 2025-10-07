@@ -8,7 +8,8 @@ enum OSInAppBrowserError: Error {
     case inputArgumentsIssue(target: OSInAppBrowserTarget)
     case failedToOpen(url: String, onTarget: OSInAppBrowserTarget)
     case noBrowserToClose
-    
+    case customError(message: String)
+
     private var code: Int {
         return switch self {
         case .inputArgumentsIssue(let target):
@@ -24,20 +25,21 @@ enum OSInAppBrowserError: Error {
             case .webView: 11
             }
         case .noBrowserToClose: 12
+        case .customError: 13
         }
     }
-    
+
     private var description: String {
         let result: String
-        
+
         switch self {
-        case .inputArgumentsIssue(let target):             
+        case .inputArgumentsIssue(let target):
             let targetString = switch target {
             case .externalBrowser: "openInExternalBrowser"
             case .systemBrowser: "openInSystemBrowser"
             case .webView: "openInWebView"
             }
-            
+
             result = "The '\(targetString)' input parameters aren't valid."
         case .failedToOpen(url: let url, onTarget: let target):
             let targetString = switch target {
@@ -45,12 +47,14 @@ enum OSInAppBrowserError: Error {
             case .systemBrowser: "SafariViewController"
             case .webView: "The WebView"
             }
-            
+
             result = "\(targetString) couldn't open the following URL: '\(url)'"
         case .noBrowserToClose:
             result = "There's no browser view to close."
+        case .customError(let message):
+            result = message
         }
-        
+
         return result
     }
     

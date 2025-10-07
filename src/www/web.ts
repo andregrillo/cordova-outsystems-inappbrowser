@@ -66,12 +66,22 @@ function openInExternalBrowser(url: string, success: () => void, error: (error: 
 }
 
 function close(success: () => void, error: (error: PluginError) => void): void {
-  exec(success, error, 'OSInAppBrowser', 'close', [{}])  
+  exec(success, error, 'OSInAppBrowser', 'close', [{}])
+}
+
+function insertCSS(cssCode: string, success: () => void, error: (error: PluginError) => void): void {
+  exec(success, error, 'OSInAppBrowser', 'insertCSS', [cssCode])
+}
+
+function executeScript(jsCode: string, success: () => void, error: (error: PluginError) => void): void {
+  exec(success, error, 'OSInAppBrowser', 'executeScript', [jsCode])
 }
 
 module.exports = {
   openInWebView,
   openInExternalBrowser,
   openInSystemBrowser,
-  close
+  close,
+  insertCSS,
+  executeScript
 }

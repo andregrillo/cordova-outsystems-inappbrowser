@@ -39,14 +39,45 @@
         <source-file src="src/ios/OSInAppBrowser.swift" />
         <source-file src="src/ios/OSInAppBrowserError.swift" />
         <source-file src="src/ios/OSInAppBrowserInputArgumentsModel.swift" />
+        <source-file src="src/ios/OSIABWebViewModelManager.swift" />
+        <source-file src="src/ios/OSIABWebViewModel+ScriptExtensions.swift" />
 
-        <podspec>
-            <config>
-                <source url="https://cdn.cocoapods.org/"/>
-            </config>
-            <pods use-frameworks="true">
-                <pod name="OSInAppBrowserLib" spec="2.3.1" />
-            </pods>
-        </podspec> 
+        <!-- OSInAppBrowserLib - Models -->
+        <source-file src="src/ios/lib/Models/OSIABAnimationEffect.swift" />
+        <source-file src="src/ios/lib/Models/OSIABDismissStyle.swift" />
+        <source-file src="src/ios/lib/Models/OSIABToolbarPosition.swift" />
+        <source-file src="src/ios/lib/Models/OSIABViewStyle.swift" />
+        <source-file src="src/ios/lib/Models/OSIABWebViewConfigurationModel.swift" />
+        <source-file src="src/ios/lib/Models/OSIABWebViewUIModel.swift" />
+
+        <!-- OSInAppBrowserLib - Models/Options -->
+        <source-file src="src/ios/lib/Models/Options/OSIABOptions.swift" />
+        <source-file src="src/ios/lib/Models/Options/OSIABSystemBrowserOptions.swift" />
+        <source-file src="src/ios/lib/Models/Options/OSIABWebViewOptions.swift" />
+
+        <!-- OSInAppBrowserLib - Root -->
+        <source-file src="src/ios/lib/OSIABCacheManager.swift" />
+        <source-file src="src/ios/lib/OSIABEngine.swift" />
+        <source-file src="src/ios/lib/OSIABRouter.swift" />
+
+        <!-- OSInAppBrowserLib - RouterAdapters -->
+        <source-file src="src/ios/lib/RouterAdapters/OSIABApplicationRouterAdapter.swift" />
+        <source-file src="src/ios/lib/RouterAdapters/OSIABSafariViewControllerRouterAdapter.swift" />
+        <source-file src="src/ios/lib/RouterAdapters/OSIABWebViewRouterAdapter.swift" />
+
+        <!-- OSInAppBrowserLib - WebView -->
+        <source-file src="src/ios/lib/WebView/OSIABWebViewCallbackHandler.swift" />
+        <source-file src="src/ios/lib/WebView/OSIABWebViewModel.swift" />
+
+        <!-- OSInAppBrowserLib - WebView/Views -->
+        <source-file src="src/ios/lib/WebView/Views/OSIABErrorView.swift" />
+        <source-file src="src/ios/lib/WebView/Views/OSIABNavigationView.swift" />
+        <source-file src="src/ios/lib/WebView/Views/OSIABWebView.swift" />
+        <source-file src="src/ios/lib/WebView/Views/OSIABWebView13WrapperView.swift" />
+        <source-file src="src/ios/lib/WebView/Views/OSIABWebViewRepresentable.swift" />
+        <source-file src="src/ios/lib/WebView/Views/OSIABWebViewWrapperView.swift" />
+
+        <!-- OSInAppBrowserLib - WebView/Views/Modifiers -->
+        <source-file src="src/ios/lib/WebView/Views/Modifiers/OSIABViewModifiers.swift" />
     </platform>
 </plugin>
