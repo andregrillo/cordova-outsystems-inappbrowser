@@ -26,9 +26,7 @@ class OSIABHiddenBrowserManager: NSObject {
             let configuration = WKWebViewConfiguration()
             configuration.allowsInlineMediaPlayback = options.allowInLineMediaPlayback
             if #available(iOS 10.0, *) {
-                configuration.mediaTypesRequiringUserActionForPlayback = options.mediaPlaybackRequiresUserAction ? .all : []
-            } else {
-                configuration.requiresUserActionForMediaPlayback = options.mediaPlaybackRequiresUserAction
+                configuration.mediaTypesRequiringUserActionForPlayback = options.mediaPlaybackRequiresUserAction ? .all : WKAudiovisualMediaTypes()
             }
             configuration.suppressesIncrementalRendering = options.surpressIncrementalRendering
 
