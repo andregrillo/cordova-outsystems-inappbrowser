@@ -97,6 +97,57 @@ class OSInAppBrowser: CDVPlugin {
         }
     }
     
+    @objc(openHidden:)
+    func openHidden(command: CDVInvokedUrlCommand) {
+        let target = OSInAppBrowserTarget.webView
+
+        self.commandDelegate.run { [weak self] in
+            guard let self else { return }
+
+            guard
+                let argumentsModel: OSInAppBrowserInputArgumentsComplexModel = self.createModel(for: command.argument(at: 0)),
+                let url = URL(string: argumentsModel.url)
+            else {
+                return self.send(error: .inputArgumentsIssue(target: target), for: command.callbackId)
+            }
+
+            let browserId = UUID().uuidString
+            let options = argumentsModel.toWebViewOptions()
+            let timeout = argumentsModel.options.timeoutInSeconds
+
+            DispatchQueue.main.async {
+                OSIABHiddenBrowserManager.shared.create(
+                    browserId: browserId,
+                    url: url,
+                    options: options,
+                    customHeaders: argumentsModel.customHeaders,
+                    timeout: timeout
+                ) { [weak self] event, data in
+                    self?.handleHiddenBrowserResult(event, browserId: browserId, for: command.callbackId, data: data)
+                }
+
+                // Send success with browserId immediately
+                self.sendSuccess(for: command.callbackId, data: ["browserId": browserId])
+            }
+        }
+    }
+
+    @objc(closeHidden:)
+    func closeHidden(command: CDVInvokedUrlCommand) {
+        self.commandDelegate.run { [weak self] in
+            guard let self else { return }
+
+            guard let browserId = command.argument(at: 0) as? String else {
+                return self.send(error: .customError(message: "Missing browserId parameter"), for: command.callbackId)
+            }
+
+            DispatchQueue.main.async {
+                OSIABHiddenBrowserManager.shared.remove(browserId: browserId)
+                self.sendSuccess(for: command.callbackId)
+            }
+        }
+    }
+
     @objc(close:)
     func close(command: CDVInvokedUrlCommand) {
         self.commandDelegate.run { [weak self] in
@@ -180,7 +231,7 @@ private extension OSInAppBrowser {
     
     func handleResult(_ event: OSIABEventType, for callbackId: String, checking viewController: UIViewController?, data: Any?, error: OSInAppBrowserError) {
         let sendEvent: (Any?) -> Void = { data in self.sendSuccess(event, for: callbackId, data: data) }
-        
+
         switch event {
         case .success:
             if let viewController {
@@ -198,6 +249,21 @@ private extension OSInAppBrowser {
             sendEvent(data)
         case .pageNavigationCompleted:
             sendEvent(data)
+        }
+    }
+
+    func handleHiddenBrowserResult(_ event: OSIABEventType, browserId: String, for callbackId: String, data: Any?) {
+        var eventData: [String: Any] = ["browserId": browserId]
+        if let data = data {
+            eventData["data"] = data
+        }
+
+        switch event {
+        case .pageLoadCompleted, .pageNavigationCompleted, .pageClosed:
+            self.sendSuccess(event, for: callbackId, data: eventData)
+        case .success:
+            // Already sent success with browserId
+            break
         }
     }
 }

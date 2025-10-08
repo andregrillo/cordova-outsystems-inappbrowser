@@ -150,13 +150,43 @@ function insertCSS(cssCode, success, error) {
 function executeScript(jsCode, success, error) {
   exec(success, error, "OSInAppBrowser", "executeScript", [jsCode]);
 }
+function openHidden(url, options, success, error, browserCallbacks, customHeaders) {
+  options = options || DefaultWebViewOptions;
+  let triggerCorrectCallback = function(result) {
+    const parsedResult = JSON.parse(result);
+    if (parsedResult) {
+      const hiddenData = parsedResult.data;
+      if (parsedResult.eventType === CallbackEventType.SUCCESS) {
+        success(hiddenData.browserId);
+      } else if (browserCallbacks) {
+        switch (parsedResult.eventType) {
+          case CallbackEventType.PAGE_CLOSED:
+            browserCallbacks.onbrowserClosed(hiddenData.browserId);
+            break;
+          case CallbackEventType.PAGE_LOAD_COMPLETED:
+            browserCallbacks.onbrowserPageLoaded(hiddenData.browserId);
+            break;
+          case CallbackEventType.PAGE_NAVIGATION_COMPLETED:
+            browserCallbacks.onbrowserPageNavigationCompleted(hiddenData.browserId, hiddenData.data);
+            break;
+        }
+      }
+    }
+  };
+  exec(triggerCorrectCallback, error, "OSInAppBrowser", "openHidden", [{ url, options, customHeaders }]);
+}
+function closeHidden(browserId, success, error) {
+  exec(success, error, "OSInAppBrowser", "closeHidden", [browserId]);
+}
 module.exports = {
   openInWebView,
   openInExternalBrowser,
   openInSystemBrowser,
   close,
   insertCSS,
-  executeScript
+  executeScript,
+  openHidden,
+  closeHidden
 };
 export {
   AndroidAnimation,

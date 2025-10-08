@@ -1,5 +1,5 @@
 import { require } from "cordova";
-import { BrowserCallbacks, PluginError, SystemBrowserOptions, WebViewOptions, CallbackEvent, CallbackEventType } from "./definitions";
+import { BrowserCallbacks, PluginError, SystemBrowserOptions, WebViewOptions, CallbackEvent, CallbackEventType, HiddenBrowserCallbacks, HiddenBrowserData } from "./definitions";
 import { DefaultSystemBrowserOptions, DefaultWebViewOptions } from "./defaults";
 var exec = require('cordova/exec')
 
@@ -77,11 +77,46 @@ function executeScript(jsCode: string, success: () => void, error: (error: Plugi
   exec(success, error, 'OSInAppBrowser', 'executeScript', [jsCode])
 }
 
+function openHidden(url: string, options: WebViewOptions, success: (browserId: string) => void, error: (error: PluginError) => void, browserCallbacks?: HiddenBrowserCallbacks, customHeaders?: { [key: string]: string } | null): void {
+  options = options || DefaultWebViewOptions;
+
+  let triggerCorrectCallback = function (result: string) {
+    const parsedResult: CallbackEvent = JSON.parse(result);
+    if (parsedResult) {
+      const hiddenData = parsedResult.data as HiddenBrowserData;
+
+      if (parsedResult.eventType === CallbackEventType.SUCCESS) {
+        success(hiddenData.browserId);
+      } else if (browserCallbacks) {
+        switch (parsedResult.eventType) {
+          case CallbackEventType.PAGE_CLOSED:
+            browserCallbacks.onbrowserClosed(hiddenData.browserId);
+            break;
+          case CallbackEventType.PAGE_LOAD_COMPLETED:
+            browserCallbacks.onbrowserPageLoaded(hiddenData.browserId);
+            break;
+          case CallbackEventType.PAGE_NAVIGATION_COMPLETED:
+            browserCallbacks.onbrowserPageNavigationCompleted(hiddenData.browserId, hiddenData.data);
+            break;
+        }
+      }
+    }
+  };
+
+  exec(triggerCorrectCallback, error, 'OSInAppBrowser', 'openHidden', [{url, options, customHeaders}]);
+}
+
+function closeHidden(browserId: string, success: () => void, error: (error: PluginError) => void): void {
+  exec(success, error, 'OSInAppBrowser', 'closeHidden', [browserId])
+}
+
 module.exports = {
   openInWebView,
   openInExternalBrowser,
   openInSystemBrowser,
   close,
   insertCSS,
-  executeScript
+  executeScript,
+  openHidden,
+  closeHidden
 }

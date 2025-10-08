@@ -12,16 +12,16 @@ class OSInAppBrowserInputArgumentsComplexModel: OSInAppBrowserInputArgumentsSimp
             let animationEffect: OSIABAnimationEffect?
             let enableBarsCollapsing: Bool?
             let enableReadersMode: Bool?
-            
+
             let allowOverScroll: Bool?
             let enableViewportScale: Bool?
             let allowInLineMediaPlayback: Bool?
             let surpressIncrementalRendering: Bool?
             let allowsBackForwardNavigationGestures: Bool?
         }
-        
+
         let iOS: iOS
-        
+
         let showURL: Bool?
         let showToolbar: Bool?
         let clearCache: Bool?
@@ -32,6 +32,7 @@ class OSInAppBrowserInputArgumentsComplexModel: OSInAppBrowserInputArgumentsSimp
         let leftToRight: Bool?
         let showNavigationButtons: Bool?
         let customWebViewUserAgent: String?
+        let timeoutInSeconds: Int?
     }
     
     let options: Options

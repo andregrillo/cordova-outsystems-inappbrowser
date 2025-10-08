@@ -40,6 +40,7 @@ export interface WebViewOptions {
     showNavigationButtons: boolean;
     leftToRight: boolean;
     customWebViewUserAgent: String | null;
+    timeoutInSeconds?: number;
     android: AndroidWebViewOptions;
     iOS: iOSWebViewOptions;
 }
@@ -89,6 +90,15 @@ export interface BrowserCallbacks {
     onbrowserClosed: () => void;
     onbrowserPageLoaded: () => void;
     onbrowserPageNavigationCompleted: (url?: string) => void;
+}
+export interface HiddenBrowserCallbacks {
+    onbrowserClosed: (browserId: string) => void;
+    onbrowserPageLoaded: (browserId: string) => void;
+    onbrowserPageNavigationCompleted: (browserId: string, url?: string) => void;
+}
+export interface HiddenBrowserData {
+    browserId: string;
+    data?: any;
 }
 export declare enum CallbackEventType {
     SUCCESS = 1,

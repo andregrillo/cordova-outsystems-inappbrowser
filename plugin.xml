@@ -164,6 +164,7 @@
         <source-file src="src/ios/OSInAppBrowserInputArgumentsModel.swift" />
         <source-file src="src/ios/OSIABWebViewModelManager.swift" />
         <source-file src="src/ios/OSIABWebViewModel+ScriptExtensions.swift" />
+        <source-file src="src/ios/OSIABHiddenBrowserManager.swift" />
 
         <!-- OSInAppBrowserLib - Models -->
         <source-file src="src/ios/lib/Models/OSIABAnimationEffect.swift" />
