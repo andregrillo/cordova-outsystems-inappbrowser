@@ -133,8 +133,9 @@
         <resource-file src="src/android/res/layout/loading_layout.xml" target="res/layout/loading_layout.xml" />
         <resource-file src="src/android/res/layout/navigation_view.xml" target="res/layout/navigation_view.xml" />
         <resource-file src="src/android/res/values/attrs.xml" target="res/values/attrs.xml" />
-        <resource-file src="src/android/res/values/colors.xml" target="res/values/colors.xml" />
         <resource-file src="src/android/res/values/ids.xml" target="res/values/ids.xml" />
+
+        <!-- Merge strings instead of replacing -->
         <config-file parent="/resources" target="res/values/strings.xml">
             <string name="title_activity_osiabweb_view">OSIABWebViewActivity</string>
             <string name="start_button">Start Button</string>
@@ -143,8 +144,94 @@
             <string name="error_screen_text">Couldn\'t load the page content.</string>
             <string name="reload_button_text">Reload page</string>
         </config-file>
-        <resource-file src="src/android/res/values/styles.xml" target="res/values/styles.xml" />
-        <resource-file src="src/android/res/values/themes.xml" target="res/values/themes.xml" />
+
+        <!-- Merge colors instead of replacing -->
+        <config-file parent="/resources" target="res/values/colors.xml">
+            <color name="navigation_button_dark_theme">#EAEAEA</color>
+            <color name="tool_bar_dark_theme">#292929</color>
+            <color name="tool_bar_light_theme">#FFFFFF</color>
+            <color name="textPrimary">#000000</color>
+            <color name="textPrimaryDark">#FFFFFF</color>
+            <color name="urlPrimary">#3F3F3F</color>
+            <color name="urlPrimaryDark">#EAEAEA</color>
+            <color name="errorText">#626262</color>
+            <color name="errorTextDark">#E7E7E7</color>
+        </config-file>
+
+        <!-- Merge styles instead of replacing -->
+        <config-file parent="/resources" target="res/values/styles.xml">
+            <style name="InAppToolBar" parent="Widget.AppCompat.Toolbar">
+                <item name="android:background">?attr/toolbarColor</item>
+                <item name="android:elevation">4dp</item>
+                <item name="android:paddingHorizontal">16dp</item>
+            </style>
+            <style name="NavigationButton" parent="Widget.AppCompat.ImageButton">
+                <item name="android:padding">0dp</item>
+                <item name="android:background">@null</item>
+                <item name="android:clickable">true</item>
+                <item name="android:shadowColor">@android:color/transparent</item>
+                <item name="android:backgroundTint">@android:color/transparent</item>
+                <item name="android:enabled">@android:color/transparent</item>
+                <item name="android:alpha">0.2</item>
+            </style>
+            <style name="NavigationButton.Back">
+                <item name="android:id">@id/start_button</item>
+                <item name="android:contentDescription">back_button</item>
+                <item name="android:src">?attr/backButtonSrc</item>
+                <item name="android:paddingStart">0dp</item>
+                <item name="android:paddingEnd">8dp</item>
+            </style>
+            <style name="NavigationButton.Forward">
+                <item name="android:id">@id/end_button</item>
+                <item name="android:contentDescription">forward_button</item>
+                <item name="android:paddingStart">8dp</item>
+                <item name="android:paddingEnd">0dp</item>
+                <item name="android:src">?attr/forwardButtonSrc</item>
+            </style>
+            <style name="URLBar" parent="Widget.AppCompat.TextView">
+                <item name="android:id">@id/url_text</item>
+                <item name="android:ellipsize">end</item>
+                <item name="android:maxLines">1</item>
+                <item name="android:singleLine">true</item>
+                <item name="android:paddingHorizontal">8dp</item>
+                <item name="android:paddingVertical">0dp</item>
+                <item name="android:textColor">?attr/urlColor</item>
+            </style>
+            <style name="CloseButton" parent="Widget.AppCompat.TextView">
+                <item name="android:textAllCaps">false</item>
+                <item name="android:textColor">?attr/colorPrimary</item>
+                <item name="android:textStyle">bold</item>
+                <item name="android:backgroundTint">@android:color/transparent</item>
+                <item name="android:background">@android:color/transparent</item>
+                <item name="android:paddingStart">8dp</item>
+                <item name="android:paddingEnd">8dp</item>
+            </style>
+            <style name="Theme.Transparent" parent="Theme.AppCompat.NoActionBar">
+                <item name="android:windowBackground">@android:color/transparent</item>
+                <item name="android:windowContentOverlay">@null</item>
+                <item name="android:windowIsTranslucent">true</item>
+                <item name="android:windowNoTitle">true</item>
+                <item name="android:windowIsFloating">true</item>
+                <item name="android:backgroundDimEnabled">false</item>
+            </style>
+        </config-file>
+
+        <!-- Merge themes instead of replacing -->
+        <config-file parent="/resources" target="res/values/themes.xml">
+            <style name="AppTheme.WebView" parent="Theme.AppCompat.DayNight.NoActionBar">
+                <item name="windowActionBar">false</item>
+                <item name="windowNoTitle">true</item>
+                <item name="backButtonSrc">@drawable/back_button_black</item>
+                <item name="forwardButtonSrc">@drawable/forward_button_black</item>
+                <item name="reloadButtonSrc">@drawable/reload_button_black</item>
+                <item name="colorPrimary">@color/textPrimary</item>
+                <item name="urlColor">@color/urlPrimary</item>
+                <item name="backgroundTint">@null</item>
+                <item name="backgroundTintMode">@null</item>
+                <item name="toolbarColor">@color/tool_bar_light_theme</item>
+                <item name="errorTextColor">@color/errorText</item>
+            </style>
+        </config-file>
         <resource-file src="src/android/res/values-night/themes.xml" target="res/values-night/themes.xml" />
         <resource-file src="src/android/res/values-v28/styles.xml" target="res/values-v28/styles.xml" />
         <resource-file src="src/android/res/xml/file_paths.xml" target="res/xml/file_paths.xml" />
