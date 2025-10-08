@@ -15,6 +15,11 @@ sealed class OSInAppBrowserError(val code: String, val message: String) {
         code = 12.formatErrorCode(),
         message = "There's no browser view to close."
     )
+
+    data class CustomError(val customMessage: String) : OSInAppBrowserError(
+        code = 13.formatErrorCode(),
+        message = customMessage
+    )
 }
 
 enum class OSInAppBrowserTarget(

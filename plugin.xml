@@ -10,6 +10,8 @@
     <platform name="android">
 
         <hook type="before_plugin_install" src="hooks/outsystems/handle_cleartextTrafficPermitted.js" />
+        <hook type="after_plugin_install" src="hooks/update_r_import.js" />
+        <hook type="after_prepare" src="hooks/update_r_import.js" />
 
         <config-file parent="/*" target="res/xml/config.xml">
             <feature name="OSInAppBrowser">
@@ -20,13 +22,125 @@
             <preference name="AndroidXEnabled" value="true"/>
         </config-file>
         
-        <config-file parent="/*" target="AndroidManifest.xml" />
+        <config-file parent="/*" target="AndroidManifest.xml">
+            <!-- Permissions from OSInAppBrowserLib -->
+            <uses-permission android:name="android.permission.INTERNET" />
+            <uses-permission android:name="android.permission.RECORD_AUDIO" />
+            <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+            <uses-permission android:name="android.permission.CAMERA" />
+            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+        </config-file>
+
+        <config-file parent="/manifest/application" target="AndroidManifest.xml">
+            <!-- OSInAppBrowserLib Activities -->
+            <activity
+                android:name="com.outsystems.plugins.inappbrowser.osinappbrowserlib.views.OSIABWebViewActivity"
+                android:exported="false"
+                android:configChanges="orientation|screenSize|uiMode"
+                android:label="OSIABWebViewActivity"
+                android:theme="@style/AppTheme.WebView"
+                android:enableOnBackInvokedCallback="true" />
+            <activity
+                android:name="com.outsystems.plugins.inappbrowser.osinappbrowserlib.views.OSIABCustomTabsControllerActivity"
+                android:exported="false"
+                android:theme="@style/Theme.Transparent"
+                android:launchMode="singleTask"
+                android:excludeFromRecents="true"
+                android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
+
+            <!-- File Provider for file uploads in WebView -->
+            <provider
+                android:name="com.outsystems.plugins.inappbrowser.osinappbrowserlib.FileProvider"
+                android:authorities="${applicationId}.fileprovider"
+                android:exported="false"
+                android:grantUriPermissions="true">
+                <meta-data
+                    android:name="android.support.FILE_PROVIDER_PATHS"
+                    android:resource="@xml/file_paths" />
+            </provider>
+        </config-file>
+
+        <config-file parent="/manifest" target="AndroidManifest.xml">
+            <!-- Custom Tabs queries -->
+            <queries>
+                <intent>
+                    <action android:name="android.intent.action.VIEW" />
+                    <category android:name="android.intent.category.BROWSABLE" />
+                    <data android:scheme="http" />
+                </intent>
+                <intent>
+                    <action android:name="android.intent.action.VIEW" />
+                    <category android:name="android.intent.category.BROWSABLE" />
+                    <data android:scheme="https" />
+                </intent>
+                <intent>
+                    <action android:name="android.support.customtabs.action.CustomTabsService" />
+                </intent>
+            </queries>
+        </config-file>
         <source-file src="src/android/OSInAppBrowser.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser" />
         <source-file src="src/android/OSInAppBrowserError.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser" />
-        
-        <framework src="src/android/build.gradle" custom="true" type="gradleReference" />
         <source-file src="src/android/OSInAppBrowserSystemBrowserInputArguments.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser" />
         <source-file src="src/android/OSInAppBrowserWebViewInputArguments.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser" />
+        <source-file src="src/android/OSIABWebViewManager.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser" />
+        <source-file src="src/android/OSIABWebViewExtensions.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser" />
+
+        <framework src="src/android/build.gradle" custom="true" type="gradleReference" />
+
+        <!-- OSInAppBrowserLib - Root -->
+        <source-file src="src/android/lib/FileProvider.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib" />
+        <source-file src="src/android/lib/OSIABClosable.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib" />
+        <source-file src="src/android/lib/OSIABEngine.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib" />
+        <source-file src="src/android/lib/OSIABEvents.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib" />
+        <source-file src="src/android/lib/OSIABRouter.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib" />
+
+        <!-- OSInAppBrowserLib - Helpers -->
+        <source-file src="src/android/lib/helpers/OSIABCustomTabsSessionHelper.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/helpers" />
+        <source-file src="src/android/lib/helpers/OSIABCustomTabsSessionHelperInterface.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/helpers" />
+        <source-file src="src/android/lib/helpers/OSIABFlowHelper.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/helpers" />
+        <source-file src="src/android/lib/helpers/OSIABFlowHelperInterface.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/helpers" />
+        <source-file src="src/android/lib/helpers/OSIABPdfHelper.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/helpers" />
+
+        <!-- OSInAppBrowserLib - Models -->
+        <source-file src="src/android/lib/models/OSIABAnimation.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/models" />
+        <source-file src="src/android/lib/models/OSIABBottomSheet.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/models" />
+        <source-file src="src/android/lib/models/OSIABCustomTabsOptions.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/models" />
+        <source-file src="src/android/lib/models/OSIABOptions.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/models" />
+        <source-file src="src/android/lib/models/OSIABToolbarPosition.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/models" />
+        <source-file src="src/android/lib/models/OSIABViewStyle.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/models" />
+        <source-file src="src/android/lib/models/OSIABWebViewOptions.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/models" />
+
+        <!-- OSInAppBrowserLib - RouterAdapters -->
+        <source-file src="src/android/lib/routeradapters/OSIABBaseRouterAdapter.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/routeradapters" />
+        <source-file src="src/android/lib/routeradapters/OSIABCustomTabsRouterAdapter.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/routeradapters" />
+        <source-file src="src/android/lib/routeradapters/OSIABExternalBrowserRouterAdapter.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/routeradapters" />
+        <source-file src="src/android/lib/routeradapters/OSIABWebViewRouterAdapter.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/routeradapters" />
+
+        <!-- OSInAppBrowserLib - Views -->
+        <source-file src="src/android/lib/views/OSIABCustomTabsControllerActivity.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/views" />
+        <source-file src="src/android/lib/views/OSIABWebViewActivity.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowserlib/views" />
+
+        <!-- Android Resources -->
+        <resource-file src="src/android/res/drawable/back_button_black.xml" target="res/drawable/back_button_black.xml" />
+        <resource-file src="src/android/res/drawable/back_button_white.xml" target="res/drawable/back_button_white.xml" />
+        <resource-file src="src/android/res/drawable/forward_button_black.xml" target="res/drawable/forward_button_black.xml" />
+        <resource-file src="src/android/res/drawable/forward_button_white.xml" target="res/drawable/forward_button_white.xml" />
+        <resource-file src="src/android/res/drawable/reload_button_black.xml" target="res/drawable/reload_button_black.xml" />
+        <resource-file src="src/android/res/drawable/reload_button_white.xml" target="res/drawable/reload_button_white.xml" />
+        <resource-file src="src/android/res/layout/activity_web_view.xml" target="res/layout/activity_web_view.xml" />
+        <resource-file src="src/android/res/layout/error_layout.xml" target="res/layout/error_layout.xml" />
+        <resource-file src="src/android/res/layout/loading_layout.xml" target="res/layout/loading_layout.xml" />
+        <resource-file src="src/android/res/layout/navigation_view.xml" target="res/layout/navigation_view.xml" />
+        <resource-file src="src/android/res/values/attrs.xml" target="res/values/attrs.xml" />
+        <resource-file src="src/android/res/values/colors.xml" target="res/values/colors.xml" />
+        <resource-file src="src/android/res/values/ids.xml" target="res/values/ids.xml" />
+        <resource-file src="src/android/res/values/strings.xml" target="res/values/strings.xml" />
+        <resource-file src="src/android/res/values/styles.xml" target="res/values/styles.xml" />
+        <resource-file src="src/android/res/values/themes.xml" target="res/values/themes.xml" />
+        <resource-file src="src/android/res/values-night/themes.xml" target="res/values-night/themes.xml" />
+        <resource-file src="src/android/res/values-v28/styles.xml" target="res/values-v28/styles.xml" />
+        <resource-file src="src/android/res/xml/file_paths.xml" target="res/xml/file_paths.xml" />
     </platform>
     <platform name="ios">
         <config-file parent="/*" target="config.xml">

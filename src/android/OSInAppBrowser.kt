@@ -50,6 +50,12 @@ class OSInAppBrowser: CordovaPlugin() {
             "close" -> {
                 close(callbackContext)
             }
+            "insertCSS" -> {
+                insertCSS(args, callbackContext)
+            }
+            "executeScript" -> {
+                executeScript(args, callbackContext)
+            }
         }
         return true
     }
@@ -228,6 +234,62 @@ class OSInAppBrowser: CordovaPlugin() {
                 callback(success)
             }
         } ?: callback(false)
+    }
+
+    /**
+     * Injects CSS code into the current page loaded in the InAppBrowser WebView
+     * @param args JSONArray that contains the CSS code to inject
+     * @param callbackContext CallbackContext the method should return to
+     */
+    private fun insertCSS(args: JSONArray, callbackContext: CallbackContext) {
+        val cssCode = args.optString(0)
+
+        if (cssCode.isNullOrBlank()) {
+            sendError(callbackContext, OSInAppBrowserError.CustomError("Missing CSS code parameter"))
+            return
+        }
+
+        val webView = OSIABWebViewManager.getWebView()
+        if (webView == null) {
+            sendError(callbackContext, OSInAppBrowserError.CustomError("No InAppBrowser instance is currently open"))
+            return
+        }
+
+        webView.insertCSS(cssCode) { error ->
+            if (error != null) {
+                sendError(callbackContext, OSInAppBrowserError.CustomError("Failed to insert CSS: $error"))
+            } else {
+                sendSuccess(callbackContext, OSIABEventType.SUCCESS)
+            }
+        }
+    }
+
+    /**
+     * Executes JavaScript code in the current page loaded in the InAppBrowser WebView
+     * @param args JSONArray that contains the JavaScript code to execute
+     * @param callbackContext CallbackContext the method should return to
+     */
+    private fun executeScript(args: JSONArray, callbackContext: CallbackContext) {
+        val jsCode = args.optString(0)
+
+        if (jsCode.isNullOrBlank()) {
+            sendError(callbackContext, OSInAppBrowserError.CustomError("Missing JavaScript code parameter"))
+            return
+        }
+
+        val webView = OSIABWebViewManager.getWebView()
+        if (webView == null) {
+            sendError(callbackContext, OSInAppBrowserError.CustomError("No InAppBrowser instance is currently open"))
+            return
+        }
+
+        webView.executeScript(jsCode) { error ->
+            if (error != null) {
+                sendError(callbackContext, OSInAppBrowserError.CustomError("Failed to execute script: $error"))
+            } else {
+                sendSuccess(callbackContext, OSIABEventType.SUCCESS)
+            }
+        }
     }
 
     /**
