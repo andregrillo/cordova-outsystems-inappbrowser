@@ -25,8 +25,7 @@ class OSIABHiddenBrowserManager: NSObject {
             // Create WKWebView configuration
             let configuration = WKWebViewConfiguration()
             configuration.allowsInlineMediaPlayback = options.allowInLineMediaPlayback
-            let mediaTypes: WKAudiovisualMediaTypes = options.mediaPlaybackRequiresUserAction ? .all : []
-            configuration.mediaTypesRequiringUserActionForPlayback = mediaTypes
+            configuration.mediaTypesRequiringUserActionForPlayback = options.mediaTypesRequiringUserActionForPlayback
             configuration.suppressesIncrementalRendering = options.surpressIncrementalRendering
 
             // Create a 1x1 hidden webview
