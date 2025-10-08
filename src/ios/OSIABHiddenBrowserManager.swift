@@ -25,9 +25,7 @@ class OSIABHiddenBrowserManager: NSObject {
             // Create WKWebView configuration
             let configuration = WKWebViewConfiguration()
             configuration.allowsInlineMediaPlayback = options.allowInLineMediaPlayback
-            if #available(iOS 10.0, *) {
-                configuration.mediaTypesRequiringUserActionForPlayback = options.mediaPlaybackRequiresUserAction ? .all : WKAudiovisualMediaTypes()
-            }
+            configuration.mediaTypesRequiringUserActionForPlayback = options.mediaPlaybackRequiresUserAction ? .all : []
             configuration.suppressesIncrementalRendering = options.surpressIncrementalRendering
 
             // Create a 1x1 hidden webview
@@ -43,12 +41,17 @@ class OSIABHiddenBrowserManager: NSObject {
 
             // Clear cache if needed
             if options.clearCache {
-                let dataStore = WKWebsiteDataStore.default()
-                dataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: Date(timeIntervalSince1970: 0)) { }
+                WKWebsiteDataStore.default().removeData(
+                    ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(),
+                    modifiedSince: Date(timeIntervalSince1970: 0),
+                    completionHandler: {}
+                )
             } else if options.clearSessionCache {
-                let dataStore = WKWebsiteDataStore.default()
-                let types = Set([WKWebsiteDataTypeCookies, WKWebsiteDataTypeSessionStorage])
-                dataStore.removeData(ofTypes: types, modifiedSince: Date(timeIntervalSince1970: 0)) { }
+                WKWebsiteDataStore.default().removeData(
+                    ofTypes: Set([WKWebsiteDataTypeCookies, WKWebsiteDataTypeSessionStorage]),
+                    modifiedSince: Date(timeIntervalSince1970: 0),
+                    completionHandler: {}
+                )
             }
 
             // Load URL with custom headers if provided
