@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base Cordova splash screen color - DO NOT REMOVE -->
+    <color name="cdv_splashscreen_background">#FFFFFFFF</color>
+
+    <!-- Plugin-specific colors -->
     <color name="navigation_button_dark_theme">#EAEAEA</color>
     <color name="tool_bar_dark_theme">#292929</color>
     <color name="tool_bar_light_theme">#FFFFFF</color>
