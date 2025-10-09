@@ -1,5 +1,6 @@
 package com.outsystems.plugins.inappbrowser.osinappbrowser
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.webkit.WebResourceError
@@ -21,6 +22,7 @@ object OSIABHiddenBrowserManager {
      */
     class HiddenBrowserInstance(
         val browserId: String,
+        context: Context,
         url: String,
         options: OSIABWebViewOptions,
         customHeaders: Map<String, String>?,
@@ -33,7 +35,7 @@ object OSIABHiddenBrowserManager {
         private var firstLoadDone = false
 
         init {
-            webView = WebView(null).apply {
+            webView = WebView(context).apply {
                 // Configure WebView with options
                 settings.apply {
                     javaScriptEnabled = true
@@ -44,7 +46,7 @@ object OSIABHiddenBrowserManager {
                     allowContentAccess = true
 
                     // Set custom user agent if provided
-                    options.customUserAgent?.let { customUserAgent = it }
+                    options.customUserAgent?.let { userAgentString = it }
                 }
 
                 // Clear cache if needed
@@ -111,6 +113,7 @@ object OSIABHiddenBrowserManager {
      */
     fun create(
         browserId: String,
+        context: Context,
         url: String,
         options: OSIABWebViewOptions,
         customHeaders: Map<String, String>?,
@@ -119,6 +122,7 @@ object OSIABHiddenBrowserManager {
     ) {
         val instance = HiddenBrowserInstance(
             browserId,
+            context,
             url,
             options,
             customHeaders,

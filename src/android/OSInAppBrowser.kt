@@ -336,7 +336,8 @@ class OSInAppBrowser: CordovaPlugin() {
                 it.android.allowZoom ?: true,
                 it.android.hardwareBack ?: true,
                 it.android.pauseMedia ?: true,
-                it.customWebViewUserAgent
+                it.customWebViewUserAgent,
+                it.timeoutInSeconds
             )
         }
     }
@@ -349,22 +350,26 @@ class OSInAppBrowser: CordovaPlugin() {
     private fun openHidden(args: JSONArray, callbackContext: CallbackContext) {
         val url: String
         val options: OSIABWebViewOptions
-        val customHeaders: Map<String, String>?
+        var customHeaders: Map<String, String>? = null
 
         try {
             val argumentsDictionary = args.getJSONObject(0)
             url = argumentsDictionary.getString("url")
             if (url.isNullOrEmpty()) throw IllegalArgumentException()
 
-            val optionsJson = argumentsDictionary.getJSONObject("options")
-            options = parseWebViewOptions(optionsJson)
+            options = buildWebViewOptions(argumentsDictionary.optString("options", "{}"))
 
-            customHeaders = argumentsDictionary.optJSONObject("customHeaders")?.let { headers ->
-                val map = mutableMapOf<String, String>()
-                headers.keys().forEach { key ->
-                    map[key] = headers.getString(key)
+            if (argumentsDictionary.has("customHeaders")) {
+                customHeaders = argumentsDictionary.getJSONObject("customHeaders").let { jsObject ->
+                    val result = mutableMapOf<String, String>()
+                    jsObject.keys().forEach { key ->
+                        when (val value = jsObject.opt(key)) {
+                            is String -> result[key] = value
+                            is Number -> result[key] = value.toString()
+                        }
+                    }
+                    result
                 }
-                map
             }
         } catch (e: Exception) {
             sendError(callbackContext, OSInAppBrowserError.InputArgumentsIssue(OSInAppBrowserTarget.WEB_VIEW))
@@ -377,6 +382,7 @@ class OSInAppBrowser: CordovaPlugin() {
 
             OSIABHiddenBrowserManager.create(
                 browserId,
+                cordova.context,
                 url,
                 options,
                 customHeaders,
