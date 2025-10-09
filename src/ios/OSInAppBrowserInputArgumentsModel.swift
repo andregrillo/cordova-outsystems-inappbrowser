@@ -38,11 +38,12 @@ class OSInAppBrowserInputArgumentsComplexModel: OSInAppBrowserInputArgumentsSimp
     let options: Options
     let customHeaders: [String: String]?
 
-    enum CodingKeys: CodingKey {
+    enum CodingKeys: String, CodingKey {
+        case url
         case options
         case customHeaders
     }
-    
+
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.options = try container.decode(Options.self, forKey: .options)

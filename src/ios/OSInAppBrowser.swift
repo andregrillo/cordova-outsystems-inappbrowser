@@ -127,7 +127,7 @@ class OSInAppBrowser: CDVPlugin {
                 }
 
                 // Send success with browserId immediately
-                self.sendSuccess(for: command.callbackId, data: ["browserId": browserId])
+                self.sendSuccess(.success, for: command.callbackId, data: ["browserId": browserId])
             }
         }
     }
@@ -138,12 +138,17 @@ class OSInAppBrowser: CDVPlugin {
             guard let self else { return }
 
             guard let browserId = command.argument(at: 0) as? String else {
+                print("❌ closeHidden: Missing browserId parameter")
                 return self.send(error: .customError(message: "Missing browserId parameter"), for: command.callbackId)
             }
 
+            print("✅ closeHidden: Closing browser with ID: \(browserId)")
+
             DispatchQueue.main.async {
                 OSIABHiddenBrowserManager.shared.remove(browserId: browserId)
+                print("✅ closeHidden: Browser removed, sending success callback")
                 self.sendSuccess(for: command.callbackId)
+                print("✅ closeHidden: Success callback sent")
             }
         }
     }
@@ -270,11 +275,66 @@ private extension OSInAppBrowser {
 
 private extension OSInAppBrowser {
     func createModel<T: Decodable>(for inputArgument: Any?) -> T? {
-        guard let argumentsDictionary = inputArgument as? [String: Any],
-              let argumentsData = try? JSONSerialization.data(withJSONObject: argumentsDictionary),
-              let argumentsModel = try? JSONDecoder().decode(T.self, from: argumentsData)
-        else { return nil }
-        return argumentsModel
+        guard var argumentsDictionary = inputArgument as? [String: Any] else {
+            print("❌ Failed to cast inputArgument to [String: Any]")
+            return nil
+        }
+
+        print("📦 Original arguments: \(argumentsDictionary)")
+
+        // Clean "<null>" strings that come from Service Studio
+        argumentsDictionary = cleanNullValues(in: argumentsDictionary)
+
+        print("🧹 Cleaned arguments: \(argumentsDictionary)")
+
+        guard let argumentsData = try? JSONSerialization.data(withJSONObject: argumentsDictionary) else {
+            print("❌ Failed to serialize arguments to JSON data")
+            return nil
+        }
+
+        if let jsonString = String(data: argumentsData, encoding: .utf8) {
+            print("📄 JSON string: \(jsonString)")
+        }
+
+        do {
+            let argumentsModel = try JSONDecoder().decode(T.self, from: argumentsData)
+            print("✅ Successfully decoded model")
+            return argumentsModel
+        } catch {
+            print("❌ Failed to decode JSON to model type \(T.self)")
+            print("❌ Decode error: \(error)")
+            if let decodingError = error as? DecodingError {
+                switch decodingError {
+                case .keyNotFound(let key, let context):
+                    print("❌ Key '\(key.stringValue)' not found: \(context.debugDescription)")
+                case .typeMismatch(let type, let context):
+                    print("❌ Type mismatch for type \(type): \(context.debugDescription)")
+                case .valueNotFound(let type, let context):
+                    print("❌ Value not found for type \(type): \(context.debugDescription)")
+                case .dataCorrupted(let context):
+                    print("❌ Data corrupted: \(context.debugDescription)")
+                @unknown default:
+                    print("❌ Unknown decoding error")
+                }
+            }
+            return nil
+        }
+    }
+
+    func cleanNullValues(in dictionary: [String: Any]) -> [String: Any] {
+        var cleaned = [String: Any]()
+        for (key, value) in dictionary {
+            if let stringValue = value as? String, stringValue == "<null>" {
+                // Replace "<null>" string with NSNull
+                cleaned[key] = NSNull()
+            } else if let nestedDict = value as? [String: Any] {
+                // Recursively clean nested dictionaries
+                cleaned[key] = cleanNullValues(in: nestedDict)
+            } else {
+                cleaned[key] = value
+            }
+        }
+        return cleaned
     }
     
     func present(_ viewController: UIViewController, _ completionHandler: (() -> Void)?) {
@@ -297,6 +357,14 @@ private extension OSInAppBrowser {
             dataToSend["eventType"] = eventType.rawValue
             dataToSend["data"] = data
             if let jsonData = try? JSONSerialization.data(withJSONObject: dataToSend, options: .prettyPrinted),
+               let jsonString = String(data: jsonData, encoding: .utf8) {
+                pluginResult = .init(status: .ok, messageAs: jsonString)
+            } else {
+                pluginResult = .init(status: .ok)
+            }
+        } else if let data = data {
+            // No eventType but we have data - send it directly (e.g., browserId)
+            if let jsonData = try? JSONSerialization.data(withJSONObject: data, options: .prettyPrinted),
                let jsonString = String(data: jsonData, encoding: .utf8) {
                 pluginResult = .init(status: .ok, messageAs: jsonString)
             } else {
