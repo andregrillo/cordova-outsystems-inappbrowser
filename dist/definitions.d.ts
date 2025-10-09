@@ -92,9 +92,9 @@ export interface BrowserCallbacks {
     onbrowserPageNavigationCompleted: (url?: string) => void;
 }
 export interface HiddenBrowserCallbacks {
-    onbrowserClosed: (browserId: string) => void;
-    onbrowserPageLoaded: (browserId: string) => void;
-    onbrowserPageNavigationCompleted: (browserId: string, url?: string) => void;
+    onbrowserClosed: () => void;
+    onbrowserPageLoaded: () => void;
+    onbrowserPageNavigationCompleted: (url?: string) => void;
 }
 export interface HiddenBrowserData {
     browserId: string;

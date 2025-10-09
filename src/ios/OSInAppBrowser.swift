@@ -268,15 +268,15 @@ private extension OSInAppBrowser {
     func handleHiddenBrowserResult(_ event: OSIABEventType, browserId: String, for callbackId: String, data: Any?) {
         print("🔔 handleHiddenBrowserResult called: event=\(event), browserId=\(browserId)")
 
-        var eventData: [String: Any] = ["browserId": browserId]
-        if let data = data {
-            eventData["data"] = data
-        }
-
         switch event {
-        case .pageLoadCompleted, .pageNavigationCompleted, .pageClosed:
-            print("🔔 Sending event to JS: \(event), eventData=\(eventData)")
-            self.sendSuccess(event, for: callbackId, data: eventData)
+        case .pageLoadCompleted, .pageNavigationCompleted:
+            // For navigation events, include the URL data
+            print("🔔 Sending event to JS: \(event), data=\(String(describing: data))")
+            self.sendSuccess(event, for: callbackId, data: data)
+        case .pageClosed:
+            // For close event, no data needed
+            print("🔔 Sending event to JS: \(event), no data")
+            self.sendSuccess(event, for: callbackId, data: nil)
         case .success:
             print("🔔 SUCCESS event, already sent")
             // Already sent success with browserId

@@ -453,15 +453,20 @@ class OSInAppBrowser: CordovaPlugin() {
     ) {
         android.util.Log.d("OSInAppBrowser", "handleHiddenBrowserResult: event=$event, browserId=$browserId")
 
-        val eventData = mutableMapOf<String, Any>("browserId" to browserId)
-        data?.let { eventData["data"] = it }
-
         when (event) {
-            OSIABEventType.BROWSER_PAGE_LOADED,
-            OSIABEventType.BROWSER_PAGE_NAVIGATION_COMPLETED,
+            OSIABEventType.BROWSER_PAGE_LOADED -> {
+                android.util.Log.d("OSInAppBrowser", "handleHiddenBrowserResult: Sending PAGE_LOADED event to JS")
+                sendSuccess(callbackContext, event, null)
+            }
+            OSIABEventType.BROWSER_PAGE_NAVIGATION_COMPLETED -> {
+                // For navigation events, include the URL data
+                android.util.Log.d("OSInAppBrowser", "handleHiddenBrowserResult: Sending NAVIGATION_COMPLETED event to JS, data=$data")
+                sendSuccess(callbackContext, event, data)
+            }
             OSIABEventType.BROWSER_FINISHED -> {
-                android.util.Log.d("OSInAppBrowser", "handleHiddenBrowserResult: Sending event to JS, eventData=$eventData")
-                sendSuccess(callbackContext, event, eventData)
+                // For close event, no data needed
+                android.util.Log.d("OSInAppBrowser", "handleHiddenBrowserResult: Sending BROWSER_FINISHED event to JS")
+                sendSuccess(callbackContext, event, null)
             }
             OSIABEventType.SUCCESS -> {
                 android.util.Log.d("OSInAppBrowser", "handleHiddenBrowserResult: SUCCESS event, already sent")
