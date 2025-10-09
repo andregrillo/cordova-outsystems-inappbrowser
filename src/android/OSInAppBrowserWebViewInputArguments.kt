@@ -15,7 +15,7 @@ data class OSInAppBrowserWebViewInputArguments(
     @SerializedName("showNavigationButtons") val showNavigationButtons: Boolean?,
     @SerializedName("customWebViewUserAgent") val customWebViewUserAgent: String?,
     @SerializedName("timeoutInSeconds") val timeoutInSeconds: Int?,
-    @SerializedName("android") val android: OSInAppBrowserWebViewAndroidOptions
+    @SerializedName("android") val android: OSInAppBrowserWebViewAndroidOptions?
 )
 
 data class OSInAppBrowserWebViewAndroidOptions(

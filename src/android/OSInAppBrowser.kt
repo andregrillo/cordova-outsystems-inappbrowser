@@ -333,9 +333,9 @@ class OSInAppBrowser: CordovaPlugin() {
                 it.toolbarPosition ?: OSIABToolbarPosition.TOP,
                 it.leftToRight ?: false,
                 it.showNavigationButtons ?: true,
-                it.android.allowZoom ?: true,
-                it.android.hardwareBack ?: true,
-                it.android.pauseMedia ?: true,
+                it.android?.allowZoom ?: true,
+                it.android?.hardwareBack ?: true,
+                it.android?.pauseMedia ?: true,
                 it.customWebViewUserAgent,
                 it.timeoutInSeconds
             )
@@ -359,17 +359,15 @@ class OSInAppBrowser: CordovaPlugin() {
 
             options = buildWebViewOptions(argumentsDictionary.optString("options", "{}"))
 
-            if (argumentsDictionary.has("customHeaders")) {
-                customHeaders = argumentsDictionary.getJSONObject("customHeaders").let { jsObject ->
-                    val result = mutableMapOf<String, String>()
-                    jsObject.keys().forEach { key ->
-                        when (val value = jsObject.opt(key)) {
-                            is String -> result[key] = value
-                            is Number -> result[key] = value.toString()
-                        }
+            customHeaders = argumentsDictionary.optJSONObject("customHeaders")?.let { jsObject ->
+                val result = mutableMapOf<String, String>()
+                jsObject.keys().forEach { key ->
+                    when (val value = jsObject.opt(key)) {
+                        is String -> result[key] = value
+                        is Number -> result[key] = value.toString()
                     }
-                    result
                 }
+                result
             }
         } catch (e: Exception) {
             sendError(callbackContext, OSInAppBrowserError.InputArgumentsIssue(OSInAppBrowserTarget.WEB_VIEW))
@@ -380,19 +378,21 @@ class OSInAppBrowser: CordovaPlugin() {
             val browserId = java.util.UUID.randomUUID().toString()
             val timeout = options.timeoutInSeconds
 
-            OSIABHiddenBrowserManager.create(
-                browserId,
-                cordova.context,
-                url,
-                options,
-                customHeaders,
-                timeout
-            ) { event, data ->
-                handleHiddenBrowserResult(event, browserId, callbackContext, data)
-            }
+            cordova.activity.runOnUiThread {
+                OSIABHiddenBrowserManager.create(
+                    browserId,
+                    cordova.context,
+                    url,
+                    options,
+                    customHeaders,
+                    timeout
+                ) { event, data ->
+                    handleHiddenBrowserResult(event, browserId, callbackContext, data)
+                }
 
-            // Send success with browserId immediately
-            sendSuccess(callbackContext, OSIABEventType.SUCCESS, mapOf("browserId" to browserId))
+                // Send success with browserId immediately
+                sendSuccess(callbackContext, OSIABEventType.SUCCESS, mapOf("browserId" to browserId))
+            }
         } catch (e: Exception) {
             sendError(callbackContext, OSInAppBrowserError.OpenFailed(url, OSInAppBrowserTarget.WEB_VIEW))
         }
