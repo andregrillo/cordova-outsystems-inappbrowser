@@ -1,0 +1,156 @@
+package com.outsystems.plugins.inappbrowser.osinappbrowser
+
+import android.os.Handler
+import android.os.Looper
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import com.outsystems.plugins.inappbrowser.osinappbrowserlib.models.OSIABWebViewOptions
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+
+/**
+ * Manager for hidden InAppBrowser instances used for background authentication flows
+ */
+object OSIABHiddenBrowserManager {
+    private val hiddenBrowsers = ConcurrentHashMap<String, HiddenBrowserInstance>()
+
+    /**
+     * Hidden browser instance that runs in the background
+     */
+    class HiddenBrowserInstance(
+        val browserId: String,
+        url: String,
+        options: OSIABWebViewOptions,
+        customHeaders: Map<String, String>?,
+        timeout: Int?,
+        private val completionHandler: (OSIABEventType, Any?) -> Unit
+    ) {
+        private val webView: WebView
+        private val handler = Handler(Looper.getMainLooper())
+        private var timeoutRunnable: Runnable? = null
+        private var firstLoadDone = false
+
+        init {
+            webView = WebView(null).apply {
+                // Configure WebView with options
+                settings.apply {
+                    javaScriptEnabled = true
+                    domStorageEnabled = true
+                    databaseEnabled = true
+                    mediaPlaybackRequiresUserGesture = options.mediaPlaybackRequiresUserAction
+                    allowFileAccess = true
+                    allowContentAccess = true
+
+                    // Set custom user agent if provided
+                    options.customUserAgent?.let { customUserAgent = it }
+                }
+
+                // Clear cache if needed
+                if (options.clearCache) {
+                    clearCache(true)
+                    clearFormData()
+                    clearHistory()
+                }
+                if (options.clearSessionCache) {
+                    clearCache(false)
+                }
+
+                // Set WebViewClient to handle page events
+                webViewClient = object : WebViewClient() {
+                    override fun onPageFinished(view: WebView?, url: String?) {
+                        if (!firstLoadDone) {
+                            firstLoadDone = true
+                            completionHandler(OSIABEventType.BROWSER_PAGE_LOADED, null)
+                        } else {
+                            completionHandler(OSIABEventType.BROWSER_PAGE_NAVIGATION_COMPLETED, url)
+                        }
+                    }
+
+                    override fun onReceivedError(
+                        view: WebView?,
+                        request: WebResourceRequest?,
+                        error: WebResourceError?
+                    ) {
+                        super.onReceivedError(view, request, error)
+                        val errorData = mapOf("error" to (error?.description?.toString() ?: "Unknown error"))
+                        completionHandler(OSIABEventType.BROWSER_FINISHED, errorData)
+                    }
+                }
+
+                // Load URL with custom headers if provided
+                if (customHeaders != null && customHeaders.isNotEmpty()) {
+                    loadUrl(url, customHeaders)
+                } else {
+                    loadUrl(url)
+                }
+            }
+
+            // Set up timeout if specified
+            timeout?.let { timeoutSeconds ->
+                if (timeoutSeconds > 0) {
+                    timeoutRunnable = Runnable {
+                        val timeoutData = mapOf("reason" to "timeout")
+                        completionHandler(OSIABEventType.BROWSER_FINISHED, timeoutData)
+                    }
+                    handler.postDelayed(timeoutRunnable!!, (timeoutSeconds * 1000).toLong())
+                }
+            }
+        }
+
+        fun cleanup() {
+            timeoutRunnable?.let { handler.removeCallbacks(it) }
+            webView.stopLoading()
+            webView.destroy()
+        }
+    }
+
+    /**
+     * Creates and stores a hidden browser instance
+     */
+    fun create(
+        browserId: String,
+        url: String,
+        options: OSIABWebViewOptions,
+        customHeaders: Map<String, String>?,
+        timeout: Int?,
+        completionHandler: (OSIABEventType, Any?) -> Unit
+    ) {
+        val instance = HiddenBrowserInstance(
+            browserId,
+            url,
+            options,
+            customHeaders,
+            timeout,
+            completionHandler
+        )
+        hiddenBrowsers[browserId] = instance
+    }
+
+    /**
+     * Removes a hidden browser instance
+     */
+    fun remove(browserId: String) {
+        hiddenBrowsers[browserId]?.let { instance ->
+            instance.cleanup()
+            hiddenBrowsers.remove(browserId)
+        }
+    }
+
+    /**
+     * Gets a hidden browser instance
+     */
+    fun get(browserId: String): HiddenBrowserInstance? {
+        return hiddenBrowsers[browserId]
+    }
+
+    /**
+     * Removes all hidden browsers
+     */
+    fun removeAll() {
+        hiddenBrowsers.keys.forEach { browserId ->
+            remove(browserId)
+        }
+    }
+}

@@ -56,6 +56,12 @@ class OSInAppBrowser: CordovaPlugin() {
             "executeScript" -> {
                 executeScript(args, callbackContext)
             }
+            "openHidden" -> {
+                openHidden(args, callbackContext)
+            }
+            "closeHidden" -> {
+                closeHidden(args, callbackContext)
+            }
         }
         return true
     }
@@ -332,6 +338,102 @@ class OSInAppBrowser: CordovaPlugin() {
                 it.android.pauseMedia ?: true,
                 it.customWebViewUserAgent
             )
+        }
+    }
+
+    /**
+     * Opens a hidden browser instance for background authentication flows
+     * @param args JSONArray that contains the parameters to parse (url, options, customHeaders)
+     * @param callbackContext CallbackContext the method should return to
+     */
+    private fun openHidden(args: JSONArray, callbackContext: CallbackContext) {
+        val url: String
+        val options: OSIABWebViewOptions
+        val customHeaders: Map<String, String>?
+
+        try {
+            val argumentsDictionary = args.getJSONObject(0)
+            url = argumentsDictionary.getString("url")
+            if (url.isNullOrEmpty()) throw IllegalArgumentException()
+
+            val optionsJson = argumentsDictionary.getJSONObject("options")
+            options = parseWebViewOptions(optionsJson)
+
+            customHeaders = argumentsDictionary.optJSONObject("customHeaders")?.let { headers ->
+                val map = mutableMapOf<String, String>()
+                headers.keys().forEach { key ->
+                    map[key] = headers.getString(key)
+                }
+                map
+            }
+        } catch (e: Exception) {
+            sendError(callbackContext, OSInAppBrowserError.InputArgumentsIssue(OSInAppBrowserTarget.WEB_VIEW))
+            return
+        }
+
+        try {
+            val browserId = java.util.UUID.randomUUID().toString()
+            val timeout = options.timeoutInSeconds
+
+            OSIABHiddenBrowserManager.create(
+                browserId,
+                url,
+                options,
+                customHeaders,
+                timeout
+            ) { event, data ->
+                handleHiddenBrowserResult(event, browserId, callbackContext, data)
+            }
+
+            // Send success with browserId immediately
+            sendSuccess(callbackContext, OSIABEventType.SUCCESS, mapOf("browserId" to browserId))
+        } catch (e: Exception) {
+            sendError(callbackContext, OSInAppBrowserError.OpenFailed(url, OSInAppBrowserTarget.WEB_VIEW))
+        }
+    }
+
+    /**
+     * Closes a hidden browser instance
+     * @param args JSONArray that contains the browserId to close
+     * @param callbackContext CallbackContext the method should return to
+     */
+    private fun closeHidden(args: JSONArray, callbackContext: CallbackContext) {
+        val browserId = args.optString(0)
+
+        if (browserId.isNullOrBlank()) {
+            sendError(callbackContext, OSInAppBrowserError.CustomError("Missing browserId parameter"))
+            return
+        }
+
+        try {
+            OSIABHiddenBrowserManager.remove(browserId)
+            sendSuccess(callbackContext, OSIABEventType.SUCCESS)
+        } catch (e: Exception) {
+            sendError(callbackContext, OSInAppBrowserError.CustomError("Failed to close hidden browser: ${e.message}"))
+        }
+    }
+
+    /**
+     * Handles events from hidden browser instances
+     */
+    private fun handleHiddenBrowserResult(
+        event: OSIABEventType,
+        browserId: String,
+        callbackContext: CallbackContext,
+        data: Any?
+    ) {
+        val eventData = mutableMapOf<String, Any>("browserId" to browserId)
+        data?.let { eventData["data"] = it }
+
+        when (event) {
+            OSIABEventType.BROWSER_PAGE_LOADED,
+            OSIABEventType.BROWSER_PAGE_NAVIGATION_COMPLETED,
+            OSIABEventType.BROWSER_FINISHED -> {
+                sendSuccess(callbackContext, event, eventData)
+            }
+            OSIABEventType.SUCCESS -> {
+                // Already sent success with browserId
+            }
         }
     }
 
