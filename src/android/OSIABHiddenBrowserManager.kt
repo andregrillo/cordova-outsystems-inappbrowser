@@ -27,7 +27,7 @@ object OSIABHiddenBrowserManager {
         options: OSIABWebViewOptions,
         customHeaders: Map<String, String>?,
         timeout: Int?,
-        private val completionHandler: (OSIABEventType, Any?) -> Unit
+        val completionHandler: (OSIABEventType, Any?) -> Unit
     ) {
         private val webView: WebView
         private val handler = Handler(Looper.getMainLooper())

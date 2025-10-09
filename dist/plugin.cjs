@@ -155,23 +155,32 @@ function executeScript(jsCode, success, error) {
 function openHidden(url, options, success, error, browserCallbacks, customHeaders) {
   options = options || DefaultWebViewOptions;
   let triggerCorrectCallback = function(result) {
+    console.log("[OSInAppBrowser] openHidden callback received:", result);
     const parsedResult = JSON.parse(result);
+    console.log("[OSInAppBrowser] Parsed result:", parsedResult);
     if (parsedResult) {
       const hiddenData = parsedResult.data;
       if (parsedResult.eventType === CallbackEventType.SUCCESS) {
+        console.log("[OSInAppBrowser] SUCCESS event, calling success callback with browserId:", hiddenData.browserId);
         success(hiddenData.browserId);
       } else if (browserCallbacks) {
+        console.log("[OSInAppBrowser] Event type:", parsedResult.eventType, "browserCallbacks exists:", !!browserCallbacks);
         switch (parsedResult.eventType) {
           case CallbackEventType.PAGE_CLOSED:
+            console.log("[OSInAppBrowser] Calling onbrowserClosed with browserId:", hiddenData.browserId);
             browserCallbacks.onbrowserClosed(hiddenData.browserId);
             break;
           case CallbackEventType.PAGE_LOAD_COMPLETED:
+            console.log("[OSInAppBrowser] Calling onbrowserPageLoaded with browserId:", hiddenData.browserId);
             browserCallbacks.onbrowserPageLoaded(hiddenData.browserId);
             break;
           case CallbackEventType.PAGE_NAVIGATION_COMPLETED:
+            console.log("[OSInAppBrowser] Calling onbrowserPageNavigationCompleted with browserId:", hiddenData.browserId);
             browserCallbacks.onbrowserPageNavigationCompleted(hiddenData.browserId, hiddenData.data);
             break;
         }
+      } else {
+        console.log("[OSInAppBrowser] No browserCallbacks registered for event type:", parsedResult.eventType);
       }
     }
   };

@@ -145,11 +145,15 @@ class OSInAppBrowser: CDVPlugin {
             print("✅ closeHidden: Closing browser with ID: \(browserId)")
 
             DispatchQueue.main.async {
-                // Trigger the onbrowserClosed event before removing
-                self.handleHiddenBrowserResult(.pageClosed, browserId: browserId, for: command.callbackId, data: nil)
+                // Get the instance to trigger its completion handler
+                if let instance = OSIABHiddenBrowserManager.shared.get(browserId: browserId) {
+                    // Trigger the onbrowserClosed event using the stored handler
+                    instance.completionHandler(.pageClosed, nil)
 
-                // Then remove the browser instance
-                OSIABHiddenBrowserManager.shared.remove(browserId: browserId)
+                    // Then remove the browser instance
+                    OSIABHiddenBrowserManager.shared.remove(browserId: browserId)
+                }
+
                 print("✅ closeHidden: Browser removed, sending success callback")
                 self.sendSuccess(for: command.callbackId)
                 print("✅ closeHidden: Success callback sent")
@@ -262,6 +266,8 @@ private extension OSInAppBrowser {
     }
 
     func handleHiddenBrowserResult(_ event: OSIABEventType, browserId: String, for callbackId: String, data: Any?) {
+        print("🔔 handleHiddenBrowserResult called: event=\(event), browserId=\(browserId)")
+
         var eventData: [String: Any] = ["browserId": browserId]
         if let data = data {
             eventData["data"] = data
@@ -269,8 +275,10 @@ private extension OSInAppBrowser {
 
         switch event {
         case .pageLoadCompleted, .pageNavigationCompleted, .pageClosed:
+            print("🔔 Sending event to JS: \(event), eventData=\(eventData)")
             self.sendSuccess(event, for: callbackId, data: eventData)
         case .success:
+            print("🔔 SUCCESS event, already sent")
             // Already sent success with browserId
             break
         }

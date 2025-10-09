@@ -406,21 +406,38 @@ class OSInAppBrowser: CordovaPlugin() {
     private fun closeHidden(args: JSONArray, callbackContext: CallbackContext) {
         val browserId = args.optString(0)
 
+        android.util.Log.d("OSInAppBrowser", "closeHidden called with browserId: $browserId")
+
         if (browserId.isNullOrBlank()) {
+            android.util.Log.e("OSInAppBrowser", "closeHidden: Missing browserId parameter")
             sendError(callbackContext, OSInAppBrowserError.CustomError("Missing browserId parameter"))
             return
         }
 
         try {
             cordova.activity.runOnUiThread {
-                // Trigger the onbrowserClosed event before removing
-                handleHiddenBrowserResult(OSIABEventType.BROWSER_FINISHED, browserId, callbackContext, null)
+                // Get the instance to trigger its completion handler
+                val instance = OSIABHiddenBrowserManager.get(browserId)
 
-                // Then remove the browser instance
-                OSIABHiddenBrowserManager.remove(browserId)
+                android.util.Log.d("OSInAppBrowser", "closeHidden: Instance found: ${instance != null}")
+
+                if (instance != null) {
+                    android.util.Log.d("OSInAppBrowser", "closeHidden: Triggering onbrowserClosed event")
+                    // Trigger the onbrowserClosed event using the stored handler
+                    instance.completionHandler(OSIABEventType.BROWSER_FINISHED, null)
+
+                    android.util.Log.d("OSInAppBrowser", "closeHidden: Removing browser instance")
+                    // Then remove the browser instance
+                    OSIABHiddenBrowserManager.remove(browserId)
+                } else {
+                    android.util.Log.w("OSInAppBrowser", "closeHidden: No instance found for browserId: $browserId")
+                }
+
+                android.util.Log.d("OSInAppBrowser", "closeHidden: Sending success callback")
                 sendSuccess(callbackContext, OSIABEventType.SUCCESS)
             }
         } catch (e: Exception) {
+            android.util.Log.e("OSInAppBrowser", "closeHidden: Exception: ${e.message}", e)
             sendError(callbackContext, OSInAppBrowserError.CustomError("Failed to close hidden browser: ${e.message}"))
         }
     }
@@ -434,6 +451,8 @@ class OSInAppBrowser: CordovaPlugin() {
         callbackContext: CallbackContext,
         data: Any?
     ) {
+        android.util.Log.d("OSInAppBrowser", "handleHiddenBrowserResult: event=$event, browserId=$browserId")
+
         val eventData = mutableMapOf<String, Any>("browserId" to browserId)
         data?.let { eventData["data"] = it }
 
@@ -441,9 +460,11 @@ class OSInAppBrowser: CordovaPlugin() {
             OSIABEventType.BROWSER_PAGE_LOADED,
             OSIABEventType.BROWSER_PAGE_NAVIGATION_COMPLETED,
             OSIABEventType.BROWSER_FINISHED -> {
+                android.util.Log.d("OSInAppBrowser", "handleHiddenBrowserResult: Sending event to JS, eventData=$eventData")
                 sendSuccess(callbackContext, event, eventData)
             }
             OSIABEventType.SUCCESS -> {
+                android.util.Log.d("OSInAppBrowser", "handleHiddenBrowserResult: SUCCESS event, already sent")
                 // Already sent success with browserId
             }
         }
