@@ -412,8 +412,14 @@ class OSInAppBrowser: CordovaPlugin() {
         }
 
         try {
-            OSIABHiddenBrowserManager.remove(browserId)
-            sendSuccess(callbackContext, OSIABEventType.SUCCESS)
+            cordova.activity.runOnUiThread {
+                // Trigger the onbrowserClosed event before removing
+                handleHiddenBrowserResult(OSIABEventType.BROWSER_FINISHED, browserId, callbackContext, null)
+
+                // Then remove the browser instance
+                OSIABHiddenBrowserManager.remove(browserId)
+                sendSuccess(callbackContext, OSIABEventType.SUCCESS)
+            }
         } catch (e: Exception) {
             sendError(callbackContext, OSInAppBrowserError.CustomError("Failed to close hidden browser: ${e.message}"))
         }

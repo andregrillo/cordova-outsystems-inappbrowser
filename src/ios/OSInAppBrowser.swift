@@ -145,6 +145,10 @@ class OSInAppBrowser: CDVPlugin {
             print("✅ closeHidden: Closing browser with ID: \(browserId)")
 
             DispatchQueue.main.async {
+                // Trigger the onbrowserClosed event before removing
+                self.handleHiddenBrowserResult(.pageClosed, browserId: browserId, for: command.callbackId, data: nil)
+
+                // Then remove the browser instance
                 OSIABHiddenBrowserManager.shared.remove(browserId: browserId)
                 print("✅ closeHidden: Browser removed, sending success callback")
                 self.sendSuccess(for: command.callbackId)
