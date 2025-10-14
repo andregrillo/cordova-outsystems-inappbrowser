@@ -404,8 +404,16 @@ class OSIABWebViewActivity : AppCompatActivity() {
         val showURL: Boolean,
     ) : WebViewClient() {
 
+        private var navigationCompletedRunnable: Runnable? = null
+        private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        private val NAVIGATION_COMPLETED_DELAY_MS = 300L
+
         override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
             super.onPageStarted(view, url, favicon)
+            // Cancel any pending navigation completed events since a new navigation has started
+            navigationCompletedRunnable?.let { handler.removeCallbacks(it) }
+            navigationCompletedRunnable = null
+
             hideLoadingScreen()
             if (!hasLoadError) {
                 hideErrorScreen()
@@ -434,7 +442,16 @@ class OSIABWebViewActivity : AppCompatActivity() {
                 sendWebViewEvent(OSIABEvents.BrowserPageLoaded(browserId))
                 isFirstLoad = false
             } else if (!hasLoadError) {
-                sendWebViewEvent(OSIABEvents.BrowserPageNavigationCompleted(browserId, resolvedUrl))
+                // Debounce the navigation completed event to handle redirect chains
+                // Cancel any pending event first
+                navigationCompletedRunnable?.let { handler.removeCallbacks(it) }
+
+                // Schedule new event to fire after delay
+                navigationCompletedRunnable = Runnable {
+                    sendWebViewEvent(OSIABEvents.BrowserPageNavigationCompleted(browserId, resolvedUrl))
+                    navigationCompletedRunnable = null
+                }
+                handler.postDelayed(navigationCompletedRunnable!!, NAVIGATION_COMPLETED_DELAY_MS)
             }
 
             if (url?.startsWith(PDF_VIEWER_URL_PREFIX) == true && options.clearCache) {

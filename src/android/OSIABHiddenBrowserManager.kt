@@ -32,7 +32,9 @@ object OSIABHiddenBrowserManager {
         private val webView: WebView
         private val handler = Handler(Looper.getMainLooper())
         private var timeoutRunnable: Runnable? = null
+        private var navigationCompletedRunnable: Runnable? = null
         private var firstLoadDone = false
+        private val NAVIGATION_COMPLETED_DELAY_MS = 300L
 
         init {
             webView = WebView(context).apply {
@@ -61,12 +63,28 @@ object OSIABHiddenBrowserManager {
 
                 // Set WebViewClient to handle page events
                 webViewClient = object : WebViewClient() {
+                    override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                        super.onPageStarted(view, url, favicon)
+                        // Cancel any pending navigation completed events since a new navigation has started
+                        navigationCompletedRunnable?.let { handler.removeCallbacks(it) }
+                        navigationCompletedRunnable = null
+                    }
+
                     override fun onPageFinished(view: WebView?, url: String?) {
                         if (!firstLoadDone) {
                             firstLoadDone = true
                             completionHandler(OSIABEventType.BROWSER_PAGE_LOADED, null)
                         } else {
-                            completionHandler(OSIABEventType.BROWSER_PAGE_NAVIGATION_COMPLETED, url)
+                            // Debounce the navigation completed event to handle redirect chains
+                            // Cancel any pending event first
+                            navigationCompletedRunnable?.let { handler.removeCallbacks(it) }
+
+                            // Schedule new event to fire after delay
+                            navigationCompletedRunnable = Runnable {
+                                completionHandler(OSIABEventType.BROWSER_PAGE_NAVIGATION_COMPLETED, url)
+                                navigationCompletedRunnable = null
+                            }
+                            handler.postDelayed(navigationCompletedRunnable!!, NAVIGATION_COMPLETED_DELAY_MS)
                         }
                     }
 
@@ -103,6 +121,7 @@ object OSIABHiddenBrowserManager {
 
         fun cleanup() {
             timeoutRunnable?.let { handler.removeCallbacks(it) }
+            navigationCompletedRunnable?.let { handler.removeCallbacks(it) }
             webView.stopLoading()
             webView.destroy()
         }

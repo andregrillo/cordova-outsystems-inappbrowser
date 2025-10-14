@@ -17,6 +17,8 @@ class OSIABHiddenBrowserManager: NSObject {
         var timer: Timer?
         let completionHandler: (OSIABEventType, Any?) -> Void
         private var firstLoadDone = false
+        private var navigationCompletedTimer: DispatchWorkItem?
+        private let navigationCompletedDelay: TimeInterval = 0.3
 
         init(browserId: String, url: URL, options: OSIABWebViewOptions, customHeaders: [String: String]?, timeout: Int?, completionHandler: @escaping (OSIABEventType, Any?) -> Void) {
             self.browserId = browserId
@@ -72,12 +74,30 @@ class OSIABHiddenBrowserManager: NSObject {
         }
 
         // WKNavigationDelegate methods
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            // Cancel any pending navigation completed events since a new navigation is starting
+            navigationCompletedTimer?.cancel()
+            navigationCompletedTimer = nil
+            decisionHandler(.allow)
+        }
+
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             if !firstLoadDone {
                 firstLoadDone = true
                 completionHandler(.pageLoadCompleted, nil)
             } else {
-                completionHandler(.pageNavigationCompleted, webView.url?.absoluteString)
+                // Debounce the navigation completed event to handle redirect chains
+                // Cancel any pending event first
+                navigationCompletedTimer?.cancel()
+
+                // Schedule new event to fire after delay
+                let workItem = DispatchWorkItem { [weak self] in
+                    guard let self = self else { return }
+                    self.completionHandler(.pageNavigationCompleted, self.webView.url?.absoluteString)
+                    self.navigationCompletedTimer = nil
+                }
+                navigationCompletedTimer = workItem
+                DispatchQueue.main.asyncAfter(deadline: .now() + navigationCompletedDelay, execute: workItem)
             }
         }
 
@@ -88,6 +108,8 @@ class OSIABHiddenBrowserManager: NSObject {
         func cleanup() {
             timer?.invalidate()
             timer = nil
+            navigationCompletedTimer?.cancel()
+            navigationCompletedTimer = nil
             webView.stopLoading()
             webView.navigationDelegate = nil
         }

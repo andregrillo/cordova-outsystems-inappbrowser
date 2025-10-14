@@ -19,7 +19,11 @@ class OSIABWebViewModel: NSObject, ObservableObject {
     
     /// Indicates if first load is already done. This is important in order to trigger the `browserPageLoad` event.
     private var firstLoadDone: Bool = false
-    
+
+    /// Timer to debounce navigation completed events for handling redirect chains
+    private var navigationCompletedTimer: DispatchWorkItem?
+    private let navigationCompletedDelay: TimeInterval = 0.3
+
     /// Custom headers to be used by the WebView.
     private let customHeaders: [String: String]?
     
@@ -189,7 +193,11 @@ extension OSIABWebViewModel: WKNavigationDelegate {
     
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = navigationAction.request.url else { return decisionHandler(.cancel) }
-        
+
+        // Cancel any pending navigation completed events since a new navigation is starting
+        navigationCompletedTimer?.cancel()
+        navigationCompletedTimer = nil
+
         // if is an app store, tel, sms, mailto or geo link, let the system handle it, otherwise it fails to load it
         if ["itms-appss", "itms-apps", "tel", "sms", "mailto", "geo"].contains(url.scheme) {
             webView.stopLoading()
@@ -197,7 +205,7 @@ extension OSIABWebViewModel: WKNavigationDelegate {
             decisionHandler(.cancel)
             return
         }
-        
+
         if navigationAction.targetFrame != nil {
             decisionHandler(.allow)
         } else {
@@ -211,7 +219,18 @@ extension OSIABWebViewModel: WKNavigationDelegate {
             callbackHandler.onBrowserPageLoad()
             firstLoadDone = true
         } else {
-            callbackHandler.onBrowserPageNavigationCompleted(url.absoluteString)
+            // Debounce the navigation completed event to handle redirect chains
+            // Cancel any pending event first
+            navigationCompletedTimer?.cancel()
+
+            // Schedule new event to fire after delay
+            let workItem = DispatchWorkItem { [weak self] in
+                guard let self = self else { return }
+                self.callbackHandler.onBrowserPageNavigationCompleted(self.url.absoluteString)
+                self.navigationCompletedTimer = nil
+            }
+            navigationCompletedTimer = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + navigationCompletedDelay, execute: workItem)
         }
         error = nil
     }
