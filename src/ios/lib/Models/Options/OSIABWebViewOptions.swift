@@ -32,6 +32,8 @@ public class OSIABWebViewOptions: OSIABOptions {
     let customUserAgent: String?
     /// Indicates if swipe gestures for navigating backward and forward in the WebView history are enabled.
     let allowsBackForwardNavigationGestures: Bool
+    /// Delay in milliseconds before firing the navigation completed event (to handle redirect chains).
+    let navigationCompletedDelayMs: Int
     
     /// Constructor method.
     /// - Parameters:
@@ -66,10 +68,11 @@ public class OSIABWebViewOptions: OSIABOptions {
         enableViewportScale: Bool = false,
         allowInLineMediaPlayback: Bool = false,
         surpressIncrementalRendering: Bool = false,
-        viewStyle: OSIABViewStyle = .defaultValue, 
+        viewStyle: OSIABViewStyle = .defaultValue,
         animationEffect: OSIABAnimationEffect = .defaultValue,
         customUserAgent: String? = nil,
-        allowsBackForwardNavigationGestures: Bool = true
+        allowsBackForwardNavigationGestures: Bool = true,
+        navigationCompletedDelayMs: Int = 300
     ) {
         self.showURL = showURL
         self.showToolbar = showToolbar
@@ -86,6 +89,7 @@ public class OSIABWebViewOptions: OSIABOptions {
         self.surpressIncrementalRendering = surpressIncrementalRendering
         self.customUserAgent = customUserAgent
         self.allowsBackForwardNavigationGestures = allowsBackForwardNavigationGestures
+        self.navigationCompletedDelayMs = navigationCompletedDelayMs
         super.init(viewStyle: viewStyle, animationEffect: animationEffect)
     }
 }

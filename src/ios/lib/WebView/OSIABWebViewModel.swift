@@ -19,14 +19,16 @@ class OSIABWebViewModel: NSObject, ObservableObject {
     
     /// Indicates if first load is already done. This is important in order to trigger the `browserPageLoad` event.
     private var firstLoadDone: Bool = false
+    /// The original URL that was requested (for SSO redirect detection)
+    private let originalUrl: URL
 
     /// Timer to debounce navigation completed events for handling redirect chains
     private var navigationCompletedTimer: DispatchWorkItem?
-    private let navigationCompletedDelay: TimeInterval = 0.3
+    private let navigationCompletedDelay: TimeInterval
 
     /// Custom headers to be used by the WebView.
     private let customHeaders: [String: String]?
-    
+
     /// The current URL being displayed
     @Published private(set) var url: URL
     /// Indicates if the URL is being loaded into the screen.
@@ -59,13 +61,16 @@ class OSIABWebViewModel: NSObject, ObservableObject {
         customUserAgent: String? = nil,
         backForwardNavigationGestures: Bool = true,
         uiModel: OSIABWebViewUIModel,
-        callbackHandler: OSIABWebViewCallbackHandler
+        callbackHandler: OSIABWebViewCallbackHandler,
+        navigationCompletedDelayMs: Int = 300
     ) {
         self.url = url
+        self.originalUrl = url
         self.customHeaders = customHeaders
         self.webView = webView
         self.closeButtonText = uiModel.closeButtonText
         self.callbackHandler = callbackHandler
+        self.navigationCompletedDelay = TimeInterval(navigationCompletedDelayMs) / 1000.0
         self.toolbarPosition = uiModel.showToolbar ? uiModel.toolbarPosition : nil
         if uiModel.showToolbar && uiModel.showURL {
             self.addressLabel = url.absoluteString
@@ -102,7 +107,8 @@ class OSIABWebViewModel: NSObject, ObservableObject {
         customUserAgent: String? = nil,
         backForwardNavigationGestures: Bool = true,
         uiModel: OSIABWebViewUIModel,
-        callbackHandler: OSIABWebViewCallbackHandler
+        callbackHandler: OSIABWebViewCallbackHandler,
+        navigationCompletedDelayMs: Int = 300
     ) {
         self.init(
             url: url,
@@ -112,7 +118,8 @@ class OSIABWebViewModel: NSObject, ObservableObject {
             customUserAgent: customUserAgent,
             backForwardNavigationGestures: backForwardNavigationGestures,
             uiModel: uiModel,
-            callbackHandler: callbackHandler
+            callbackHandler: callbackHandler,
+            navigationCompletedDelayMs: navigationCompletedDelayMs
         )
     }
             
@@ -186,6 +193,20 @@ class OSIABWebViewModel: NSObject, ObservableObject {
     func closeButtonPressed() {
         callbackHandler.onBrowserClosed(false)
     }
+
+    /// Helper function to extract the domain (host) from a URL
+    private func extractDomain(from url: URL?) -> String? {
+        return url?.host
+    }
+
+    /// Helper function to check if a URL matches the original domain
+    private func matchesOriginalDomain(_ url: URL?) -> Bool {
+        guard let originalHost = extractDomain(from: originalUrl),
+              let currentHost = extractDomain(from: url) else {
+            return false
+        }
+        return originalHost == currentHost
+    }
 }
 
 // MARK: - WKNavigationDelegate implementation
@@ -215,7 +236,8 @@ extension OSIABWebViewModel: WKNavigationDelegate {
     }
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        if !firstLoadDone {
+        // Only fire onBrowserPageLoad when we return to the original domain after potential SSO redirects
+        if !firstLoadDone && matchesOriginalDomain(webView.url) {
             callbackHandler.onBrowserPageLoad()
             firstLoadDone = true
         } else {
@@ -223,7 +245,7 @@ extension OSIABWebViewModel: WKNavigationDelegate {
             // Cancel any pending event first
             navigationCompletedTimer?.cancel()
 
-            // Schedule new event to fire after delay
+            // Schedule new event to fire after delay (configurable)
             let workItem = DispatchWorkItem { [weak self] in
                 guard let self = self else { return }
                 self.callbackHandler.onBrowserPageNavigationCompleted(self.url.absoluteString)

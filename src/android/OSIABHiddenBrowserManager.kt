@@ -1,6 +1,7 @@
 package com.outsystems.plugins.inappbrowser.osinappbrowser
 
 import android.content.Context
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.webkit.WebResourceError
@@ -34,7 +35,30 @@ object OSIABHiddenBrowserManager {
         private var timeoutRunnable: Runnable? = null
         private var navigationCompletedRunnable: Runnable? = null
         private var firstLoadDone = false
-        private val NAVIGATION_COMPLETED_DELAY_MS = 300L
+        private val originalUrl = url
+        private val navigationCompletedDelayMs: Long = options.navigationCompletedDelayMs.toLong()
+
+        /**
+         * Helper function to extract the domain from a URL
+         */
+        private fun extractDomain(url: String?): String? {
+            if (url == null) return null
+            return try {
+                val uri = Uri.parse(url)
+                uri.host
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        /**
+         * Helper function to check if a URL matches the original domain
+         */
+        private fun matchesOriginalDomain(url: String?): Boolean {
+            val originalDomain = extractDomain(originalUrl)
+            val currentDomain = extractDomain(url)
+            return originalDomain != null && currentDomain != null && originalDomain == currentDomain
+        }
 
         init {
             webView = WebView(context).apply {
@@ -71,7 +95,8 @@ object OSIABHiddenBrowserManager {
                     }
 
                     override fun onPageFinished(view: WebView?, url: String?) {
-                        if (!firstLoadDone) {
+                        // Only fire BROWSER_PAGE_LOADED when we return to the original domain after potential SSO redirects
+                        if (!firstLoadDone && matchesOriginalDomain(url)) {
                             firstLoadDone = true
                             completionHandler(OSIABEventType.BROWSER_PAGE_LOADED, null)
                         } else {
@@ -79,12 +104,12 @@ object OSIABHiddenBrowserManager {
                             // Cancel any pending event first
                             navigationCompletedRunnable?.let { handler.removeCallbacks(it) }
 
-                            // Schedule new event to fire after delay
+                            // Schedule new event to fire after delay (configurable)
                             navigationCompletedRunnable = Runnable {
                                 completionHandler(OSIABEventType.BROWSER_PAGE_NAVIGATION_COMPLETED, url)
                                 navigationCompletedRunnable = null
                             }
-                            handler.postDelayed(navigationCompletedRunnable!!, NAVIGATION_COMPLETED_DELAY_MS)
+                            handler.postDelayed(navigationCompletedRunnable!!, navigationCompletedDelayMs)
                         }
                     }
 

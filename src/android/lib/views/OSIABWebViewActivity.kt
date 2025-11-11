@@ -71,6 +71,7 @@ class OSIABWebViewActivity : AppCompatActivity() {
 
     // for the browserPageLoaded event, which we only want to trigger on the first URL loaded in the WebView
     private var isFirstLoad = true
+    private var originalUrl: String? = null
 
     // for the error screen
     private var currentUrl: String? = null
@@ -170,6 +171,7 @@ class OSIABWebViewActivity : AppCompatActivity() {
 
         // get parameters from intent extras
         val urlToOpen = intent.extras?.getString(WEB_VIEW_URL_EXTRA)
+        originalUrl = urlToOpen
         options = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.extras?.getSerializable(
                 WEB_VIEW_OPTIONS_EXTRA,
@@ -396,6 +398,28 @@ class OSIABWebViewActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Helper function to extract the domain from a URL
+     */
+    private fun extractDomain(url: String?): String? {
+        if (url == null) return null
+        return try {
+            val uri = Uri.parse(url)
+            uri.host
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Helper function to check if a URL matches the original domain
+     */
+    private fun matchesOriginalDomain(url: String?): Boolean {
+        val originalDomain = extractDomain(originalUrl)
+        val currentDomain = extractDomain(url)
+        return originalDomain != null && currentDomain != null && originalDomain == currentDomain
+    }
+
     /*
      * Inner class with implementation for WebViewClient
      */
@@ -406,7 +430,7 @@ class OSIABWebViewActivity : AppCompatActivity() {
 
         private var navigationCompletedRunnable: Runnable? = null
         private val handler = android.os.Handler(android.os.Looper.getMainLooper())
-        private val NAVIGATION_COMPLETED_DELAY_MS = 300L
+        private val navigationCompletedDelayMs: Long = options.navigationCompletedDelayMs.toLong()
 
         override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
             super.onPageStarted(view, url, favicon)
@@ -438,7 +462,8 @@ class OSIABWebViewActivity : AppCompatActivity() {
                 else -> url
             }
 
-            if (isFirstLoad && !hasLoadError) {
+            // Only fire BrowserPageLoaded when we return to the original domain after potential SSO redirects
+            if (isFirstLoad && !hasLoadError && matchesOriginalDomain(url)) {
                 sendWebViewEvent(OSIABEvents.BrowserPageLoaded(browserId))
                 isFirstLoad = false
             } else if (!hasLoadError) {
@@ -446,12 +471,12 @@ class OSIABWebViewActivity : AppCompatActivity() {
                 // Cancel any pending event first
                 navigationCompletedRunnable?.let { handler.removeCallbacks(it) }
 
-                // Schedule new event to fire after delay
+                // Schedule new event to fire after delay (configurable)
                 navigationCompletedRunnable = Runnable {
                     sendWebViewEvent(OSIABEvents.BrowserPageNavigationCompleted(browserId, resolvedUrl))
                     navigationCompletedRunnable = null
                 }
-                handler.postDelayed(navigationCompletedRunnable!!, NAVIGATION_COMPLETED_DELAY_MS)
+                handler.postDelayed(navigationCompletedRunnable!!, navigationCompletedDelayMs)
             }
 
             if (url?.startsWith(PDF_VIEWER_URL_PREFIX) == true && options.clearCache) {

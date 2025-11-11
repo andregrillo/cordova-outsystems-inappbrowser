@@ -53,6 +53,7 @@ export interface WebViewOptions {
   customWebViewUserAgent: String | null;
 
   timeoutInSeconds?: number;
+  navigationCompletedDelayMs?: number;
 
   android: AndroidWebViewOptions,
   iOS: iOSWebViewOptions

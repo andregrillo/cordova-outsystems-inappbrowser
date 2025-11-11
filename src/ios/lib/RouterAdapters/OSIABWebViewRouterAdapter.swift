@@ -47,7 +47,8 @@ public class OSIABWebViewRouterAdapter: NSObject, OSIABRouter {
             customUserAgent: options.customUserAgent,
             backForwardNavigationGestures: options.allowsBackForwardNavigationGestures,
             uiModel: options.toUIModel(),
-            callbackHandler: callbackHandler
+            callbackHandler: callbackHandler,
+            navigationCompletedDelayMs: options.navigationCompletedDelayMs
         )
 
         // Register the view model globally for script injection support

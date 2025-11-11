@@ -17,5 +17,6 @@ data class OSIABWebViewOptions(
     @SerializedName("hardwareBack") val hardwareBack: Boolean = true,
     @SerializedName("pauseMedia") val pauseMedia: Boolean = true,
     @SerializedName("customUserAgent") val customUserAgent: String? = null,
-    @SerializedName("timeoutInSeconds") val timeoutInSeconds: Int? = null
+    @SerializedName("timeoutInSeconds") val timeoutInSeconds: Int? = null,
+    @SerializedName("navigationCompletedDelayMs") val navigationCompletedDelayMs: Int = 300
 ) : OSIABOptions, Serializable

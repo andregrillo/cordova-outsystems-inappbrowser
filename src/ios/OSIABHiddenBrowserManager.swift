@@ -17,11 +17,14 @@ class OSIABHiddenBrowserManager: NSObject {
         var timer: Timer?
         let completionHandler: (OSIABEventType, Any?) -> Void
         private var firstLoadDone = false
+        private let originalUrl: URL
         private var navigationCompletedTimer: DispatchWorkItem?
-        private let navigationCompletedDelay: TimeInterval = 0.3
+        private let navigationCompletedDelay: TimeInterval
 
         init(browserId: String, url: URL, options: OSIABWebViewOptions, customHeaders: [String: String]?, timeout: Int?, completionHandler: @escaping (OSIABEventType, Any?) -> Void) {
             self.browserId = browserId
+            self.originalUrl = url
+            self.navigationCompletedDelay = TimeInterval(options.navigationCompletedDelayMs) / 1000.0
             self.completionHandler = completionHandler
 
             // Create WKWebView configuration
@@ -81,8 +84,23 @@ class OSIABHiddenBrowserManager: NSObject {
             decisionHandler(.allow)
         }
 
+        /// Helper function to extract the domain (host) from a URL
+        private func extractDomain(from url: URL?) -> String? {
+            return url?.host
+        }
+
+        /// Helper function to check if a URL matches the original domain
+        private func matchesOriginalDomain(_ url: URL?) -> Bool {
+            guard let originalHost = extractDomain(from: originalUrl),
+                  let currentHost = extractDomain(from: url) else {
+                return false
+            }
+            return originalHost == currentHost
+        }
+
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            if !firstLoadDone {
+            // Only fire pageLoadCompleted when we return to the original domain after potential SSO redirects
+            if !firstLoadDone && matchesOriginalDomain(webView.url) {
                 firstLoadDone = true
                 completionHandler(.pageLoadCompleted, nil)
             } else {
@@ -90,7 +108,7 @@ class OSIABHiddenBrowserManager: NSObject {
                 // Cancel any pending event first
                 navigationCompletedTimer?.cancel()
 
-                // Schedule new event to fire after delay
+                // Schedule new event to fire after delay (configurable)
                 let workItem = DispatchWorkItem { [weak self] in
                     guard let self = self else { return }
                     self.completionHandler(.pageNavigationCompleted, self.webView.url?.absoluteString)
