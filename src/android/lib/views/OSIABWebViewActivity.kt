@@ -124,7 +124,7 @@ class OSIABWebViewActivity : AppCompatActivity() {
     private val PDF_VIEWER_URL_PREFIX = "file:///android_asset/pdfjs/web/viewer.html?file="
     // the original URL of the PDF file, used to display it correctly in the view
     // and to send the correct URL in the browserPageNavigationCompleted event
-    private var originalUrl: String? = null
+    private var originalPdfUrl: String? = null
 
     companion object {
         const val WEB_VIEW_URL_EXTRA = "WEB_VIEW_URL_EXTRA"
@@ -267,7 +267,7 @@ class OSIABWebViewActivity : AppCompatActivity() {
                 if (pdfFile != null) {
                     withContext(Dispatchers.Main) {
                         webView.stopLoading()
-                        originalUrl = url
+                        originalPdfUrl = url
                         val pdfJsUrl =
                             PDF_VIEWER_URL_PREFIX + Uri.encode("file://${pdfFile.absolutePath}")
                         webView.loadUrl(pdfJsUrl)
@@ -458,7 +458,7 @@ class OSIABWebViewActivity : AppCompatActivity() {
 
             val resolvedUrl = when {
                 url == null -> null
-                url.startsWith(PDF_VIEWER_URL_PREFIX) && originalUrl != null -> originalUrl
+                url.startsWith(PDF_VIEWER_URL_PREFIX) && originalPdfUrl != null -> originalPdfUrl
                 else -> url
             }
 
