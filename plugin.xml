@@ -3,7 +3,6 @@
     <name>cordova-outsystems-inappbrowser</name>
     <description>InAppBrowser OutSystems Cordova Plugin</description>
     <author>OutSystems Inc</author>
-    <preference name="AllowedExternalSchemes" default="ekey"/>
     <js-module name="OSInAppBrowser" src="dist/plugin.js">
         <clobbers target="cordova.plugins.OSInAppBrowser"/>
     </js-module>
@@ -25,6 +24,7 @@
         <framework src="src/android/libs/OSInAppBrowserLib-release.aar" custom="true" type="aar"/>
         <framework src="src/android/build.gradle" custom="true" type="gradleReference"/>
     </platform>
+    <preference name="AllowedExternalSchemes" default="ekey"/>
     <platform name="ios">
         <config-file parent="/*" target="config.xml">
             <feature name="OSInAppBrowser">
