@@ -21,11 +21,12 @@
         <source-file src="src/android/OSInAppBrowserError.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser"/>
         <source-file src="src/android/OSInAppBrowserSystemBrowserInputArguments.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser"/>
         <source-file src="src/android/OSInAppBrowserWebViewInputArguments.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser"/>
-        <framework src="src/android/libs/OSInAppBrowserLib-release.aar" custom="true" type="aar"/>
+        <resource-file src="src/android/libs/OSInAppBrowserLib-release.aar" target="app/libs/OSInAppBrowserLib-release.aar"/>
         <framework src="src/android/build.gradle" custom="true" type="gradleReference"/>
     </platform>
     <preference name="AllowedExternalSchemes" default="ekey"/>
     <platform name="ios">
+        <hook type="after_plugin_install" src="hooks/outsystems/handle_allowedExternalSchemes.js"/>
         <config-file parent="/*" target="config.xml">
             <feature name="OSInAppBrowser">
                 <param name="ios-package" value="OSInAppBrowser"/>
@@ -35,11 +36,6 @@
         <source-file src="src/ios/OSInAppBrowser.swift"/>
         <source-file src="src/ios/OSInAppBrowserError.swift"/>
         <source-file src="src/ios/OSInAppBrowserInputArgumentsModel.swift"/>
-        <config-file target="*-Info.plist" parent="LSApplicationQueriesSchemes">
-            <array>
-                <string>$AllowedExternalSchemes</string>
-            </array>
-        </config-file>
         <framework src="src/ios/OSInAppBrowserLib.xcframework" custom="true" embed="true"/>
     </platform>
 </plugin>
