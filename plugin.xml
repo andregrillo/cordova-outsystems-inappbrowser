@@ -21,8 +21,10 @@
         <source-file src="src/android/OSInAppBrowserError.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser"/>
         <source-file src="src/android/OSInAppBrowserSystemBrowserInputArguments.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser"/>
         <source-file src="src/android/OSInAppBrowserWebViewInputArguments.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser"/>
-        <resource-file src="src/android/libs/OSInAppBrowserLib-release.aar" target="app/libs/OSInAppBrowserLib-release.aar"/>
         <framework src="src/android/build.gradle" custom="true" type="gradleReference"/>
+
+        <lib-file src="src/android/libs/OSInAppBrowserLib-release.aar" target="libs/OSInAppBrowserLib-release.aar" />
+        
     </platform>
     <preference name="AllowedExternalSchemes" default="ekey"/>
     <platform name="ios">
