@@ -5,9 +5,14 @@ module.exports = function(context) {
     const plist = require('plist');
     const { ConfigParser } = require('cordova-common');
 
-    const cliVars = context.opts.cli_variables || {};
-    const pluginPrefs = context.opts.plugin.pluginInfo.getPreferences();
-    const scheme = cliVars['ALLOWEDEXTERNALSCHEMES'] || pluginPrefs['ALLOWEDEXTERNALSCHEMES'] || 'ekey';
+    var scheme = 'ekey';
+    const args = process.argv;
+    for (const arg of args) {
+        if (arg.includes('AllowedExternalSchemes')) {
+            var stringArray = arg.split("=");
+            scheme = stringArray.slice(-1).pop();
+        }
+    }
 
     const projectRoot = context.opts.projectRoot;
     const configParser = new ConfigParser(path.join(projectRoot, 'config.xml'));
