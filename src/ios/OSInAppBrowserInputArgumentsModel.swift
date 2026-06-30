@@ -32,6 +32,7 @@ class OSInAppBrowserInputArgumentsComplexModel: OSInAppBrowserInputArgumentsSimp
         let leftToRight: Bool?
         let showNavigationButtons: Bool?
         let customWebViewUserAgent: String?
+        let allowedExternalSchemes: [String]?
     }
     
     let options: Options
@@ -79,7 +80,8 @@ extension OSInAppBrowserInputArgumentsComplexModel {
             viewStyle: self.options.iOS.viewStyle ?? .defaultValue,
             animationEffect: self.options.iOS.animationEffect ?? .defaultValue,
             customUserAgent: self.options.customWebViewUserAgent,
-            allowsBackForwardNavigationGestures: self.options.iOS.allowsBackForwardNavigationGestures ?? true
+            allowsBackForwardNavigationGestures: self.options.iOS.allowsBackForwardNavigationGestures ?? true,
+            allowedExternalSchemes: self.options.allowedExternalSchemes ?? []
         )
     }
 }

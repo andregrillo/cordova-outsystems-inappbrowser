@@ -1,4 +1,4 @@
-import { require as require2 } from "cordova";
+import { require as require$1 } from "cordova";
 var ToolbarPosition = /* @__PURE__ */ ((ToolbarPosition2) => {
   ToolbarPosition2[ToolbarPosition2["TOP"] = 0] = "TOP";
   ToolbarPosition2[ToolbarPosition2["BOTTOM"] = 1] = "BOTTOM";
@@ -68,7 +68,8 @@ const DefaultWebViewOptions = {
   leftToRight: false,
   android: DefaultAndroidWebViewOptions,
   iOS: DefaultiOSWebViewOptions,
-  customWebViewUserAgent: null
+  customWebViewUserAgent: null,
+  allowedExternalSchemes: []
 };
 const DefaultiOSSystemBrowserOptions = {
   closeButtonText: DismissStyle.DONE,
@@ -88,7 +89,7 @@ const DefaultSystemBrowserOptions = {
   android: DefaultAndroidSystemBrowserOptions,
   iOS: DefaultiOSSystemBrowserOptions
 };
-var exec = require2("cordova/exec");
+var exec = require$1("cordova/exec");
 function trigger(type, success, data, onbrowserClosed = void 0, onbrowserPageLoaded = void 0, onbrowserPageNavigationCompleted = void 0) {
   switch (type) {
     case CallbackEventType.SUCCESS:

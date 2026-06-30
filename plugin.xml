@@ -21,6 +21,7 @@
         <source-file src="src/android/OSInAppBrowserError.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser"/>
         <source-file src="src/android/OSInAppBrowserSystemBrowserInputArguments.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser"/>
         <source-file src="src/android/OSInAppBrowserWebViewInputArguments.kt" target-dir="app/src/main/kotlin/com/outsystems/plugins/inappbrowser/osinappbrowser"/>
+        <resource-file src="src/android/libs/OSInAppBrowserLib-release.aar" target="app/libs/OSInAppBrowserLib-release.aar"/>
         <framework src="src/android/build.gradle" custom="true" type="gradleReference"/>
     </platform>
     <platform name="ios">
@@ -33,13 +34,6 @@
         <source-file src="src/ios/OSInAppBrowser.swift"/>
         <source-file src="src/ios/OSInAppBrowserError.swift"/>
         <source-file src="src/ios/OSInAppBrowserInputArgumentsModel.swift"/>
-        <podspec>
-            <config>
-                <source url="https://cdn.cocoapods.org/"/>
-            </config>
-            <pods use-frameworks="true">
-                <pod name="OSInAppBrowserLib" spec="2.3.2"/>
-            </pods>
-        </podspec>
+        <framework src="src/ios/OSInAppBrowserLib.xcframework" custom="true" embed="true"/>
     </platform>
 </plugin>

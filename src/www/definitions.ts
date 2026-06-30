@@ -51,6 +51,7 @@ export interface WebViewOptions {
   leftToRight: boolean;
 
   customWebViewUserAgent: String | null;
+  allowedExternalSchemes?: string[];
 
   android: AndroidWebViewOptions,
   iOS: iOSWebViewOptions

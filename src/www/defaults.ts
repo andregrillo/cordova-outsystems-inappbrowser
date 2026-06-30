@@ -35,7 +35,8 @@ export const DefaultWebViewOptions: WebViewOptions = {
 
     android: DefaultAndroidWebViewOptions,
     iOS: DefaultiOSWebViewOptions,
-    customWebViewUserAgent: null
+    customWebViewUserAgent: null,
+    allowedExternalSchemes: []
 }
 
 export const DefaultiOSSystemBrowserOptions: iOSSystemBrowserOptions = {

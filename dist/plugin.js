@@ -71,7 +71,8 @@
     leftToRight: false,
     android: DefaultAndroidWebViewOptions,
     iOS: DefaultiOSWebViewOptions,
-    customWebViewUserAgent: null
+    customWebViewUserAgent: null,
+    allowedExternalSchemes: []
   };
   const DefaultiOSSystemBrowserOptions = {
     closeButtonText: DismissStyle.DONE,

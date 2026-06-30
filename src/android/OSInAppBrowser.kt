@@ -269,7 +269,8 @@ class OSInAppBrowser: CordovaPlugin() {
                 it.android.hardwareBack ?: true,
                 it.android.pauseMedia ?: true,
                 it.customWebViewUserAgent,
-                it.android.isIsolated ?: true
+                it.android.isIsolated ?: true,
+                it.allowedExternalSchemes ?: emptyList()
             )
         }
     }
