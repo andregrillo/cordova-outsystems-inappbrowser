@@ -3,6 +3,7 @@
     <name>cordova-outsystems-inappbrowser</name>
     <description>InAppBrowser OutSystems Cordova Plugin</description>
     <author>OutSystems Inc</author>
+    <preference name="AllowedExternalSchemes" default="ekey"/>
     <js-module name="OSInAppBrowser" src="dist/plugin.js">
         <clobbers target="cordova.plugins.OSInAppBrowser"/>
     </js-module>
@@ -34,6 +35,11 @@
         <source-file src="src/ios/OSInAppBrowser.swift"/>
         <source-file src="src/ios/OSInAppBrowserError.swift"/>
         <source-file src="src/ios/OSInAppBrowserInputArgumentsModel.swift"/>
+        <config-file target="*-Info.plist" parent="LSApplicationQueriesSchemes">
+            <array>
+                <string>$AllowedExternalSchemes</string>
+            </array>
+        </config-file>
         <framework src="src/ios/OSInAppBrowserLib.xcframework" custom="true" embed="true"/>
     </platform>
 </plugin>
